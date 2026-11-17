@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from '../../components/ui/Modal';
 import Icon from '../../components/ui/Icon';
 import { useApp } from '../../context/AppContext';
+import { Customer } from '../../types';
 
 interface AddCustomerModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialData?: Customer | null;
 }
 
-export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose }) => {
-  const { corporateClients, insuranceCompanies, addCustomer } = useApp();
+export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, initialData }) => {
+  const { corporateClients, insuranceCompanies, addCustomer, updateCustomer } = useApp();
 
   const [activeTab, setActiveTab] = useState(1);
   const [name, setName] = useState('');
@@ -25,6 +27,24 @@ export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onCl
   const [status, setStatus] = useState<'Active' | 'Pending'>('Active');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (initialData) {
+      setName(initialData.name || '');
+      setSsn(initialData.ssn || '');
+      setDob(initialData.dob || '1990-05-15');
+      setGender((initialData.gender as any) || 'Male');
+      setEmail(initialData.email || '');
+      setPhone(initialData.phone || '');
+      setSelectedCorporateId(initialData.corporateClientId || '');
+      setSelectedInsurerId(initialData.insuranceCompanyId || insuranceCompanies[0]?.id || 'ins-001');
+      setAddress(initialData.address || '');
+      setCity(initialData.city || 'New York');
+      setStatus(initialData.status === 'Active' ? 'Active' : 'Pending');
+    } else {
+      resetForm();
+    }
+  }, [initialData, isOpen]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
@@ -33,23 +53,41 @@ export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onCl
     const corporateClient = corporateClients.find((c) => c.id === selectedCorporateId);
     const insurer = insuranceCompanies.find((i) => i.id === selectedInsurerId);
 
-    addCustomer({
-      name: name.trim(),
-      ssn:
-        ssn.trim() ||
-        `SSN-${Math.floor(100 + Math.random() * 900)}-${Math.floor(10 + Math.random() * 90)}-${Math.floor(1000 + Math.random() * 9000)}`,
-      dob,
-      gender,
-      email: email.trim() || `${name.toLowerCase().replace(/[^a-z0-9]/g, '.')}@example.com`,
-      phone: phone.trim() || '+1 (555) 714-3829',
-      corporateClientId: selectedCorporateId || undefined,
-      corporateClientName: corporateClient?.name || 'Direct Individual',
-      insuranceCompanyId: selectedInsurerId,
-      insuranceCompanyName: insurer?.name || 'Apex Health Insurance',
-      address: address.trim() || `742 Evergreen Terrace, ${city}`,
-      city,
-      status,
-    });
+    if (initialData) {
+      updateCustomer(initialData.id, {
+        name: name.trim(),
+        ssn: ssn.trim() || initialData.ssn,
+        dob,
+        gender: gender as any,
+        email: email.trim() || initialData.email,
+        phone: phone.trim() || initialData.phone,
+        corporateClientId: selectedCorporateId || undefined,
+        corporateClientName: corporateClient?.name || (selectedCorporateId ? initialData.corporateClientName : 'Direct Individual'),
+        insuranceCompanyId: selectedInsurerId,
+        insuranceCompanyName: insurer?.name || initialData.insuranceCompanyName,
+        address: address.trim() || initialData.address,
+        city,
+        status,
+      });
+    } else {
+      addCustomer({
+        name: name.trim(),
+        ssn:
+          ssn.trim() ||
+          `SSN-${Math.floor(100 + Math.random() * 900)}-${Math.floor(10 + Math.random() * 90)}-${Math.floor(1000 + Math.random() * 9000)}`,
+        dob,
+        gender: gender as any,
+        email: email.trim() || `${name.toLowerCase().replace(/[^a-z0-9]/g, '.')}@example.com`,
+        phone: phone.trim() || '+1 (555) 714-3829',
+        corporateClientId: selectedCorporateId || undefined,
+        corporateClientName: corporateClient?.name || 'Direct Individual',
+        insuranceCompanyId: selectedInsurerId,
+        insuranceCompanyName: insurer?.name || 'Apex Health Insurance',
+        address: address.trim() || `742 Evergreen Terrace, ${city}`,
+        city,
+        status,
+      });
+    }
 
     setIsSubmitting(false);
     resetForm();
@@ -71,7 +109,7 @@ export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onCl
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Register Healthcare Customer Account"
+      title={initialData ? `Edit Customer Account: ${initialData.name}` : "Register Healthcare Customer Account"}
       size="lg"
       footer={
         <div className="w-full flex items-center justify-between">

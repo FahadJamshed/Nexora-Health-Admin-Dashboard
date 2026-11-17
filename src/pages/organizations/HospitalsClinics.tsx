@@ -9,8 +9,9 @@ import { Hospital } from '../../types';
 import AddHospitalModal from './AddHospitalModal';
 
 export const HospitalsClinics: React.FC = () => {
-  const { hospitals, claims, showToast } = useApp();
+  const { hospitals, claims, navigate, showToast, deleteHospital } = useApp();
   const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
+  const [editingHospital, setEditingHospital] = useState<Hospital | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('Overview');
@@ -102,7 +103,10 @@ export const HospitalsClinics: React.FC = () => {
         primaryAction={{
           label: 'Add Hospital',
           icon: 'plus',
-          onClick: () => setIsAddOpen(true),
+          onClick: () => {
+            setEditingHospital(null);
+            setIsAddOpen(true);
+          },
         }}
       />
 
@@ -135,6 +139,36 @@ export const HospitalsClinics: React.FC = () => {
         searchPlaceholder="Search hospital, city, doctor, or department..."
         statusKey="networkStatus"
         onView={handleView}
+        onEdit={(h) => {
+          setEditingHospital(h);
+          setIsAddOpen(true);
+        }}
+        onDelete={(h) => deleteHospital(h.id)}
+        actions={[
+          {
+            label: 'View Hospital Profile',
+            icon: 'eye',
+            onClick: handleView,
+          },
+          {
+            label: 'Edit Facility',
+            icon: 'edit',
+            onClick: (h) => {
+              setEditingHospital(h);
+              setIsAddOpen(true);
+            },
+          },
+          {
+            label: 'View Hospital Claims',
+            icon: 'claims',
+            onClick: () => navigate('Claims Management'),
+          },
+          {
+            label: 'View Remittance Batches',
+            icon: 'settlements',
+            onClick: () => navigate('Settlements'),
+          },
+        ]}
       />
 
       {/* Detail Drawer */}
@@ -154,9 +188,30 @@ export const HospitalsClinics: React.FC = () => {
           onTabChange={setActiveTab}
           actions={[
             {
+              label: 'Edit Facility',
+              icon: 'edit',
+              variant: 'primary',
+              onClick: () => {
+                const hosp = selectedHospital;
+                setIsDetailOpen(false);
+                setEditingHospital(hosp);
+                setIsAddOpen(true);
+              },
+            },
+            {
               label: 'Export Panel Agreement',
               icon: 'download',
               onClick: () => showToast('Export Agreement', `Panel agreement exported for ${selectedHospital.name}.`),
+            },
+            {
+              label: 'Delete Hospital',
+              icon: 'trash',
+              variant: 'danger',
+              onClick: () => {
+                deleteHospital(selectedHospital.id);
+                setIsDetailOpen(false);
+                setSelectedHospital(null);
+              },
             },
           ]}
         >
@@ -376,7 +431,14 @@ export const HospitalsClinics: React.FC = () => {
       )}
 
       {/* Add Hospital Modal */}
-      <AddHospitalModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} />
+      <AddHospitalModal
+        isOpen={isAddOpen}
+        initialData={editingHospital}
+        onClose={() => {
+          setIsAddOpen(false);
+          setEditingHospital(null);
+        }}
+      />
     </div>
   );
 };

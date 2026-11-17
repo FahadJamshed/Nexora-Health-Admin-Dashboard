@@ -9,7 +9,7 @@ import { InsurancePlan } from '../../types';
 import AddPlanModal from './AddPlanModal';
 
 export const InsurancePlans: React.FC = () => {
-  const { insurancePlans, policies, insuredMembers, showToast } = useApp();
+  const { insurancePlans, policies, insuredMembers, navigate, showToast, deletePlan } = useApp();
   const [selectedPlan, setSelectedPlan] = useState<InsurancePlan | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -139,6 +139,24 @@ export const InsurancePlans: React.FC = () => {
         statusKey="status"
         onView={handleView}
         onEdit={handleEdit}
+        onDelete={(p) => deletePlan(p.id)}
+        actions={[
+          {
+            label: 'View Benefit Schedule',
+            icon: 'eye',
+            onClick: handleView,
+          },
+          {
+            label: 'View Underwritten Policies',
+            icon: 'policies',
+            onClick: () => navigate('Policies'),
+          },
+          {
+            label: 'View Enrolled Members',
+            icon: 'member',
+            onClick: () => navigate('Insured Members'),
+          },
+        ]}
       />
 
       {/* Detail Drawer */}
@@ -171,6 +189,16 @@ export const InsurancePlans: React.FC = () => {
               icon: 'download',
               variant: 'secondary',
               onClick: () => showToast('Schedule Exported', `Plan benefits schedule exported for ${selectedPlan.name}.`),
+            },
+            {
+              label: 'Delete Plan',
+              icon: 'trash',
+              variant: 'danger',
+              onClick: () => {
+                deletePlan(selectedPlan.id);
+                setIsDetailOpen(false);
+                setSelectedPlan(null);
+              },
             },
           ]}
         >

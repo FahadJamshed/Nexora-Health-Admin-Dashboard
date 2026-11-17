@@ -15,6 +15,8 @@ export const BankReconciliation: React.FC = () => {
     toggleMatchBankRecord,
     addBankAdjustment,
     completeReconciliation,
+    deleteBankStatement,
+    navigate,
     showToast,
   } = useApp();
 
@@ -291,6 +293,11 @@ export const BankReconciliation: React.FC = () => {
           setSelectedRecord(rec);
           setIsRecordDrawerOpen(true);
         }}
+        onView={(rec) => {
+          setSelectedRecord(rec);
+          setIsRecordDrawerOpen(true);
+        }}
+        onDelete={(rec) => deleteBankStatement(rec.id)}
         actions={[
           {
             label: 'View Clearance Slip',
@@ -314,6 +321,11 @@ export const BankReconciliation: React.FC = () => {
               setIsAdjustmentModalOpen(true);
             },
           },
+          {
+            label: 'View in General Ledger',
+            icon: 'accounting',
+            onClick: () => navigate('Transactions'),
+          },
         ]}
       />
 
@@ -331,6 +343,18 @@ export const BankReconciliation: React.FC = () => {
             />
           }
           tabs={['Clearance Details', 'GL Matching Analysis', 'Electronic Audit Trace']}
+          actions={[
+            {
+              label: 'Delete Line Item',
+              icon: 'trash',
+              variant: 'danger',
+              onClick: () => {
+                deleteBankStatement(selectedRecord.id);
+                setIsRecordDrawerOpen(false);
+                setSelectedRecord(null);
+              },
+            },
+          ]}
           footer={
             <div className="flex items-center justify-end gap-2 w-full">
               <button

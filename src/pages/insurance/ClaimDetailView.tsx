@@ -11,7 +11,7 @@ interface ClaimDetailViewProps {
 }
 
 export const ClaimDetailView: React.FC<ClaimDetailViewProps> = ({ claim, onBack }) => {
-  const { approveClaim, rejectClaim, requestClaimInfo, addClaimNote, markClaimAsPaid, showToast } = useApp();
+  const { approveClaim, rejectClaim, requestClaimInfo, addClaimNote, markClaimAsPaid, navigate, showToast, deleteClaim } = useApp();
 
   const [activeTab, setActiveTab] = useState('Overview');
   const [showApproveModal, setShowApproveModal] = useState(false);
@@ -121,6 +121,26 @@ export const ClaimDetailView: React.FC<ClaimDetailViewProps> = ({ claim, onBack 
               Mark as Paid
             </button>
           )}
+
+          {(claim.status === 'Approved' || claim.status === 'Paid') && (
+            <button
+              onClick={() => navigate('Settlements')}
+              className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-[#EAF2FF] border border-[#2776EA]/30 text-[#2776EA] hover:bg-[#d8e7fe] transition-colors"
+            >
+              View Settlement Slip →
+            </button>
+          )}
+
+          <button
+            onClick={() => {
+              deleteClaim(claim.id);
+              onBack();
+            }}
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white border border-[#F8D7DA] text-[#D64545] hover:bg-[#FDECEC]"
+          >
+            <Icon name="trash" size={13} />
+            Delete Claim
+          </button>
         </div>
       </div>
 

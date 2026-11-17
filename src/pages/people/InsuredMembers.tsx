@@ -8,7 +8,7 @@ import AddMemberModal from './AddMemberModal';
 import MemberProfileView from './MemberProfileView';
 
 export const InsuredMembers: React.FC = () => {
-  const { insuredMembers, viewingItem, setViewingItem } = useApp();
+  const { insuredMembers, viewingItem, setViewingItem, navigate, deleteMember } = useApp();
 
   const [selectedMember, setSelectedMember] = useState<InsuredMember | null>(() => {
     if (viewingItem?.type === 'Member' && viewingItem.item) {
@@ -187,6 +187,24 @@ export const InsuredMembers: React.FC = () => {
         }
         onView={handleView}
         onEdit={handleEdit}
+        onDelete={(m) => deleteMember(m.id)}
+        actions={[
+          {
+            label: 'View Member Profile',
+            icon: 'eye',
+            onClick: handleView,
+          },
+          {
+            label: 'View Member Claims',
+            icon: 'claims',
+            onClick: () => navigate('Claims Management'),
+          },
+          {
+            label: 'View Policy Agreement',
+            icon: 'policies',
+            onClick: () => navigate('Policies'),
+          },
+        ]}
       />
 
       {/* Add / Edit Modal */}

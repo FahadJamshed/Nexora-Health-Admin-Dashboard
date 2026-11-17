@@ -8,7 +8,7 @@ import AddCompanyModal from './AddCompanyModal';
 import CompanyDetailModal from './CompanyDetailModal';
 
 export const AllCompanies: React.FC = () => {
-  const { companies, setActiveModal, showToast } = useApp();
+  const { companies, setActiveModal, navigate, showToast, deleteCompany } = useApp();
 
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -158,6 +158,23 @@ export const AllCompanies: React.FC = () => {
         }
         onView={handleView}
         onEdit={handleEdit}
+        onDelete={(c) => deleteCompany(c.id)}
+        actions={[
+          {
+            label: 'View Organization Profile',
+            icon: 'eye',
+            onClick: handleView,
+          },
+          {
+            label: 'Jump to Dedicated Module',
+            icon: 'chevron-right',
+            onClick: (c) => {
+              if (c.type === 'Corporate') navigate('Corporate Clients');
+              else if (c.type === 'Insurance') navigate('Insurance Companies');
+              else navigate('Hospitals & Clinics');
+            },
+          },
+        ]}
       />
 
       {/* Detail Drawer */}

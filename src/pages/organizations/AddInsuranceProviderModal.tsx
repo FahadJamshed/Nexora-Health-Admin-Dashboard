@@ -1,18 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from '../../components/ui/Modal';
 import Icon from '../../components/ui/Icon';
 import { useApp } from '../../context/AppContext';
+import { InsuranceCompany } from '../../types';
 
 interface AddInsuranceProviderModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialData?: InsuranceCompany | null;
 }
 
 export const AddInsuranceProviderModal: React.FC<AddInsuranceProviderModalProps> = ({
   isOpen,
   onClose,
+  initialData,
 }) => {
-  const { addInsuranceCompany } = useApp();
+  const { addInsuranceCompany, updateInsuranceCompany } = useApp();
 
   const [activeTab, setActiveTab] = useState(1);
   const [name, setName] = useState('');
@@ -29,6 +32,22 @@ export const AddInsuranceProviderModal: React.FC<AddInsuranceProviderModalProps>
     'Executive Preventive Health Plus',
   ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (initialData) {
+      setName(initialData.name || '');
+      setContactPerson(initialData.contactPerson || '');
+      setEmail(initialData.email || '');
+      setPhone(initialData.phone || '');
+      setSettlementTurnaroundDays(initialData.settlementTurnaroundDays || 5);
+      setStatus(initialData.status === 'Active' ? 'Active' : 'Under Review');
+      if (initialData.supportedPlans && initialData.supportedPlans.length > 0) {
+        setSupportedPlans(initialData.supportedPlans);
+      }
+    } else {
+      resetForm();
+    }
+  }, [initialData, isOpen]);
 
   const planOptions = [
     'Comprehensive Inpatient Hospitalization',
@@ -51,16 +70,28 @@ export const AddInsuranceProviderModal: React.FC<AddInsuranceProviderModalProps>
 
     setIsSubmitting(true);
 
-    addInsuranceCompany({
-      name: name.trim(),
-      contactPerson: contactPerson.trim() || 'Chief Underwriting Officer',
-      email: email.trim() || `underwriting@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
-      phone: phone.trim() || '+1 (555) 890-4122',
-      settlementTurnaroundDays: Number(settlementTurnaroundDays) || 5,
-      activePlans: supportedPlans.length,
-      status: status === 'Under Review' ? 'Pending' : status,
-      supportedPlans: supportedPlans.length > 0 ? supportedPlans : ['Comprehensive Inpatient Care'],
-    });
+    if (initialData) {
+      updateInsuranceCompany(initialData.id, {
+        name: name.trim(),
+        contactPerson: contactPerson.trim() || 'Chief Underwriting Officer',
+        email: email.trim() || `underwriting@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
+        phone: phone.trim() || '+1 (555) 890-4122',
+        settlementTurnaroundDays: Number(settlementTurnaroundDays) || 5,
+        status: status === 'Under Review' ? 'Pending' : status,
+        supportedPlans: supportedPlans.length > 0 ? supportedPlans : ['Comprehensive Inpatient Care'],
+      });
+    } else {
+      addInsuranceCompany({
+        name: name.trim(),
+        contactPerson: contactPerson.trim() || 'Chief Underwriting Officer',
+        email: email.trim() || `underwriting@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
+        phone: phone.trim() || '+1 (555) 890-4122',
+        settlementTurnaroundDays: Number(settlementTurnaroundDays) || 5,
+        activePlans: supportedPlans.length,
+        status: status === 'Under Review' ? 'Pending' : status,
+        supportedPlans: supportedPlans.length > 0 ? supportedPlans : ['Comprehensive Inpatient Care'],
+      });
+    }
 
     setIsSubmitting(false);
     resetForm();
@@ -83,7 +114,7 @@ export const AddInsuranceProviderModal: React.FC<AddInsuranceProviderModalProps>
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Register Insurance Carrier Partner"
+      title={initialData ? `Edit Insurance Carrier: ${initialData.name}` : "Register Insurance Carrier Partner"}
       size="lg"
       footer={
         <div className="w-full flex items-center justify-between">

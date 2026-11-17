@@ -8,8 +8,9 @@ import { CorporateClient } from '../../types';
 import AddCorporateClientModal from './AddCorporateClientModal';
 
 export const CorporateClients: React.FC = () => {
-  const { corporateClients, insuredMembers, transactions, policies, claims, showToast } = useApp();
+  const { corporateClients, insuredMembers, transactions, policies, claims, navigate, showToast, deleteCorporateClient } = useApp();
   const [selectedClient, setSelectedClient] = useState<CorporateClient | null>(null);
+  const [editingClient, setEditingClient] = useState<CorporateClient | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('Overview');
@@ -93,7 +94,10 @@ export const CorporateClients: React.FC = () => {
         primaryAction={{
           label: 'Add Corporate Client',
           icon: 'plus',
-          onClick: () => setIsAddOpen(true),
+          onClick: () => {
+            setEditingClient(null);
+            setIsAddOpen(true);
+          },
         }}
       />
 
@@ -126,6 +130,36 @@ export const CorporateClients: React.FC = () => {
         searchPlaceholder="Search corporate employer, insurer, or contact..."
         statusKey="status"
         onView={handleView}
+        onEdit={(c) => {
+          setEditingClient(c);
+          setIsAddOpen(true);
+        }}
+        onDelete={(c) => deleteCorporateClient(c.id)}
+        actions={[
+          {
+            label: 'View Corporate Account',
+            icon: 'eye',
+            onClick: handleView,
+          },
+          {
+            label: 'Edit Client',
+            icon: 'edit',
+            onClick: (c) => {
+              setEditingClient(c);
+              setIsAddOpen(true);
+            },
+          },
+          {
+            label: 'View Enrolled Members',
+            icon: 'users',
+            onClick: () => navigate('Insured Members'),
+          },
+          {
+            label: 'View Group Policies',
+            icon: 'policies',
+            onClick: () => navigate('Policies'),
+          },
+        ]}
       />
 
       {/* Detail Drawer */}
@@ -145,9 +179,30 @@ export const CorporateClients: React.FC = () => {
           onTabChange={setActiveTab}
           actions={[
             {
+              label: 'Edit Client',
+              icon: 'edit',
+              variant: 'primary',
+              onClick: () => {
+                const client = selectedClient;
+                setIsDetailOpen(false);
+                setEditingClient(client);
+                setIsAddOpen(true);
+              },
+            },
+            {
               label: 'Export Contract',
               icon: 'download',
               onClick: () => showToast('Export Complete', `Policy contract PDF exported for ${selectedClient.name}.`),
+            },
+            {
+              label: 'Delete Client',
+              icon: 'trash',
+              variant: 'danger',
+              onClick: () => {
+                deleteCorporateClient(selectedClient.id);
+                setIsDetailOpen(false);
+                setSelectedClient(null);
+              },
             },
           ]}
         >
@@ -352,7 +407,14 @@ export const CorporateClients: React.FC = () => {
       )}
 
       {/* Add Client Modal */}
-      <AddCorporateClientModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} />
+      <AddCorporateClientModal
+        isOpen={isAddOpen}
+        initialData={editingClient}
+        onClose={() => {
+          setIsAddOpen(false);
+          setEditingClient(null);
+        }}
+      />
     </div>
   );
 };

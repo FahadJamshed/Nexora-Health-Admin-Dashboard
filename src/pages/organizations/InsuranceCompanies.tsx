@@ -8,8 +8,9 @@ import { InsuranceCompany } from '../../types';
 import AddInsuranceProviderModal from './AddInsuranceProviderModal';
 
 export const InsuranceCompanies: React.FC = () => {
-  const { insuranceCompanies, insurancePlans, corporateClients, claims, policies, showToast } = useApp();
+  const { insuranceCompanies, insurancePlans, corporateClients, claims, policies, navigate, showToast, deleteInsuranceCompany } = useApp();
   const [selectedProvider, setSelectedProvider] = useState<InsuranceCompany | null>(null);
+  const [editingProvider, setEditingProvider] = useState<InsuranceCompany | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('Overview');
@@ -96,7 +97,10 @@ export const InsuranceCompanies: React.FC = () => {
         primaryAction={{
           label: 'Add Provider',
           icon: 'plus',
-          onClick: () => setIsAddOpen(true),
+          onClick: () => {
+            setEditingProvider(null);
+            setIsAddOpen(true);
+          },
         }}
       />
 
@@ -127,6 +131,36 @@ export const InsuranceCompanies: React.FC = () => {
         searchPlaceholder="Search insurance provider, contact person, or plan..."
         statusKey="status"
         onView={handleView}
+        onEdit={(c) => {
+          setEditingProvider(c);
+          setIsAddOpen(true);
+        }}
+        onDelete={(c) => deleteInsuranceCompany(c.id)}
+        actions={[
+          {
+            label: 'View Carrier Partner',
+            icon: 'eye',
+            onClick: handleView,
+          },
+          {
+            label: 'Edit Carrier',
+            icon: 'edit',
+            onClick: (c) => {
+              setEditingProvider(c);
+              setIsAddOpen(true);
+            },
+          },
+          {
+            label: 'View Underwritten Plans',
+            icon: 'plans',
+            onClick: () => navigate('Insurance Plans'),
+          },
+          {
+            label: 'View Underwritten Policies',
+            icon: 'policies',
+            onClick: () => navigate('Policies'),
+          },
+        ]}
       />
 
       {/* Detail Drawer */}
@@ -146,9 +180,30 @@ export const InsuranceCompanies: React.FC = () => {
           onTabChange={setActiveTab}
           actions={[
             {
+              label: 'Edit Carrier',
+              icon: 'edit',
+              variant: 'primary',
+              onClick: () => {
+                const prov = selectedProvider;
+                setIsDetailOpen(false);
+                setEditingProvider(prov);
+                setIsAddOpen(true);
+              },
+            },
+            {
               label: 'Export Carrier SLA',
               icon: 'download',
               onClick: () => showToast('Export SLA', `Carrier performance report generated for ${selectedProvider.name}.`),
+            },
+            {
+              label: 'Delete Carrier',
+              icon: 'trash',
+              variant: 'danger',
+              onClick: () => {
+                deleteInsuranceCompany(selectedProvider.id);
+                setIsDetailOpen(false);
+                setSelectedProvider(null);
+              },
             },
           ]}
         >
@@ -348,7 +403,14 @@ export const InsuranceCompanies: React.FC = () => {
       )}
 
       {/* Add Provider Modal */}
-      <AddInsuranceProviderModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} />
+      <AddInsuranceProviderModal
+        isOpen={isAddOpen}
+        initialData={editingProvider}
+        onClose={() => {
+          setIsAddOpen(false);
+          setEditingProvider(null);
+        }}
+      />
     </div>
   );
 };

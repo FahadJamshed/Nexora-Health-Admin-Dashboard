@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from '../../components/ui/Modal';
 import { useApp } from '../../context/AppContext';
 import { InsurancePlan } from '../../types';
@@ -26,6 +26,40 @@ export const AddPlanModal: React.FC<AddPlanModalProps> = ({ isOpen, onClose, ini
     eligibilityRules: '',
     status: 'Active' as 'Active' | 'Draft' | 'Under Review',
   });
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        name: initialData.name || '',
+        insuranceCompanyId: initialData.insuranceCompanyId || 'ins-001',
+        planType: initialData.planType || 'Corporate',
+        monthlyPremium: initialData.monthlyPremium || 'PKR 12,000',
+        annualPremium: initialData.annualPremium || 'PKR 144,000',
+        coverageLimit: initialData.coverageLimit || 'PKR 3,000,000',
+        inpatientLimit: 'PKR 2,500,000',
+        opdLimit: 'PKR 350,000',
+        description: initialData.description || '',
+        eligibilityRules: '',
+        status: initialData.status as any || 'Active',
+      });
+      setActiveTab(1);
+    } else {
+      setFormData({
+        name: '',
+        insuranceCompanyId: 'ins-001',
+        planType: 'Corporate',
+        monthlyPremium: 'PKR 12,000',
+        annualPremium: 'PKR 144,000',
+        coverageLimit: 'PKR 3,000,000',
+        inpatientLimit: 'PKR 2,500,000',
+        opdLimit: 'PKR 350,000',
+        description: '',
+        eligibilityRules: '',
+        status: 'Active',
+      });
+      setActiveTab(1);
+    }
+  }, [initialData, isOpen]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);

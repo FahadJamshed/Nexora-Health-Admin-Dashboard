@@ -21,7 +21,7 @@ interface UserRecord {
 }
 
 export const AllUsers: React.FC = () => {
-  const { showToast, auditLogs, roles } = useApp();
+  const { showToast, auditLogs, roles, navigate } = useApp();
 
   const [users, setUsers] = useState<UserRecord[]>([
     { id: 'usr-001', name: 'Sarah Jenkins', email: 'sarah.jenkins@acmecorp.com', phone: '+1 (555) 845-2291', userType: 'Admin', registrationDate: '15 Jan 2024', lastActivity: 'Today, 10:42 AM', status: 'Active', department: 'Executive Management', twoFactorEnabled: true },
@@ -37,6 +37,7 @@ export const AllUsers: React.FC = () => {
   ]);
 
   const [selectedUser, setSelectedUser] = useState<UserRecord | null>(null);
+  const [editingUser, setEditingUser] = useState<UserRecord | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('Overview');
@@ -172,6 +173,31 @@ export const AllUsers: React.FC = () => {
           </div>
         }
         onView={handleView}
+        onEdit={(u) => {
+          setEditingUser(u);
+          setIsAddUserOpen(true);
+        }}
+        onDelete={(u) => {
+          setUsers((prev) => prev.filter((x) => x.id !== u.id));
+          showToast('User Deleted', `${u.name} was removed from the directory.`, 'info');
+        }}
+        actions={[
+          {
+            label: 'View User Profile',
+            icon: 'eye',
+            onClick: handleView,
+          },
+          {
+            label: 'Open Sub-Module',
+            icon: 'chevron-right',
+            onClick: (u) => {
+              if (u.userType === 'Admin') navigate('Admin Users & Roles');
+              else if (u.userType === 'Customer') navigate('Customers');
+              else if (u.userType === 'Member') navigate('Insured Members');
+              else navigate('Hospitals & Clinics');
+            },
+          },
+        ]}
       />
 
       {/* User Detail Drawer */}
@@ -190,6 +216,16 @@ export const AllUsers: React.FC = () => {
           activeTab={activeTab}
           onTabChange={setActiveTab}
           actions={[
+            {
+              label: 'Edit User',
+              variant: 'primary',
+              icon: 'edit',
+              onClick: () => {
+                setIsDetailOpen(false);
+                setEditingUser(selectedUser);
+                setIsAddUserOpen(true);
+              },
+            },
             {
               label: 'Reset Password',
               variant: 'secondary',
@@ -212,6 +248,16 @@ export const AllUsers: React.FC = () => {
                   `User ${selectedUser.name} is now ${selectedUser.status === 'Active' ? 'Inactive' : 'Active'}.`,
                   'success'
                 );
+              },
+            },
+            {
+              label: 'Delete User',
+              variant: 'danger',
+              onClick: () => {
+                setUsers((prev) => prev.filter((u) => u.id !== selectedUser.id));
+                setIsDetailOpen(false);
+                showToast('User Deleted', `${selectedUser.name} was removed.`, 'info');
+                setSelectedUser(null);
               },
             },
           ]}
@@ -417,8 +463,18 @@ export const AllUsers: React.FC = () => {
       {/* Provision User Modal */}
       <AddUserModal
         isOpen={isAddUserOpen}
-        onClose={() => setIsAddUserOpen(false)}
+        onClose={() => {
+          setIsAddUserOpen(false);
+          setEditingUser(null);
+        }}
+        initialData={editingUser}
         onAddUser={(newUser) => setUsers((prev) => [newUser, ...prev])}
+        onUpdateUser={(updatedUser) => {
+          setUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? { ...u, ...updatedUser } : u)));
+          if (selectedUser?.id === updatedUser.id) {
+            setSelectedUser((prev) => (prev ? { ...prev, ...updatedUser } : null));
+          }
+        }}
       />
     </div>
   );

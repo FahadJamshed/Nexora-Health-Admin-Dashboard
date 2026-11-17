@@ -15,6 +15,8 @@ export const Settlements: React.FC = () => {
     claims,
     bankAccounts,
     processSettlement,
+    deleteSettlement,
+    navigate,
     showToast,
   } = useApp();
 
@@ -236,6 +238,8 @@ export const Settlements: React.FC = () => {
         searchPlaceholder="Search settlements by ID, claim, hospital, or reference..."
         searchKey="settlementNumber"
         onRowClick={handleOpenDetail}
+        onView={handleOpenDetail}
+        onDelete={(s) => deleteSettlement(s.id)}
         actions={[
           {
             label: 'View Settlement Slip',
@@ -247,6 +251,12 @@ export const Settlements: React.FC = () => {
             icon: 'check',
             onClick: handleOpenProcessModal,
             show: (s) => s.status === 'Pending' || s.status === 'Processing',
+          },
+          {
+            label: 'View in General Ledger',
+            icon: 'accounting',
+            onClick: () => navigate('Transactions'),
+            show: (s) => s.status === 'Completed',
           },
         ]}
       />
@@ -267,8 +277,36 @@ export const Settlements: React.FC = () => {
             subtitle={`Payable to ${selectedSettlement.hospitalName}`}
             badge={<Badge value={selectedSettlement.status} />}
             tabs={['Settlement Summary', 'Associated Claim & Treatment', 'Bank Details']}
+            actions={[
+              {
+                label: 'Delete Settlement',
+                icon: 'trash',
+                variant: 'danger',
+                onClick: () => {
+                  deleteSettlement(selectedSettlement.id);
+                  setIsDetailOpen(false);
+                  setSelectedSettlement(null);
+                },
+              },
+            ]}
             footer={
-              (selectedSettlement.status === 'Pending' || selectedSettlement.status === 'Processing') && (
+              selectedSettlement.status === 'Completed' ? (
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-[11px] text-[#16865B] font-semibold flex items-center gap-1">
+                    <Icon name="check" size={14} /> Disbursed & Recorded in General Ledger
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsDetailOpen(false);
+                      navigate('Transactions');
+                    }}
+                    className="px-3.5 py-1.5 bg-[#2776EA] text-white rounded-lg text-xs font-semibold hover:bg-[#1f5ec2]"
+                  >
+                    View Ledger Entry →
+                  </button>
+                </div>
+              ) : (selectedSettlement.status === 'Pending' || selectedSettlement.status === 'Processing') ? (
                 <div className="flex items-center justify-end gap-2 w-full">
                   <button
                     type="button"
@@ -288,7 +326,7 @@ export const Settlements: React.FC = () => {
                     Disburse Payment
                   </button>
                 </div>
-              )
+              ) : null
             }
           >
             {(activeTab) => (

@@ -17,6 +17,8 @@ export const ClaimsManagement: React.FC = () => {
     addClaim,
     approveClaim,
     rejectClaim,
+    deleteClaim,
+    navigate,
     showToast,
   } = useApp();
 
@@ -381,6 +383,8 @@ export const ClaimsManagement: React.FC = () => {
         searchPlaceholder="Search claims by ID, member, hospital, or diagnosis..."
         searchKey="claimNumber"
         onRowClick={(c) => setSelectedClaim(c)}
+        onView={(c) => setSelectedClaim(c)}
+        onDelete={(c) => deleteClaim(c.id)}
         actions={[
           {
             label: 'Review Claim Details',
@@ -398,6 +402,12 @@ export const ClaimsManagement: React.FC = () => {
             icon: 'close',
             onClick: (c) => handleOpenQuickReject(c),
             show: (c) => c.status === 'Submitted' || c.status === 'Under Review',
+          },
+          {
+            label: 'View Settlement Slip',
+            icon: 'settlements',
+            onClick: () => navigate('Settlements'),
+            show: (c) => c.status === 'Approved' || c.status === 'Paid',
           },
         ]}
       />

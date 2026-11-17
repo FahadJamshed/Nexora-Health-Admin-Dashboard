@@ -12,6 +12,7 @@ export const NotificationCenter: React.FC = () => {
   const {
     notifications,
     addNotification,
+    deleteNotification,
     markNotificationAsRead,
     markAllNotificationsAsRead,
     showToast,
@@ -247,6 +248,8 @@ export const NotificationCenter: React.FC = () => {
         searchPlaceholder="Search broadcasts by title or content..."
         searchKey="title"
         onRowClick={handleOpenDetail}
+        onView={handleOpenDetail}
+        onDelete={(n) => deleteNotification(n.id)}
         actions={[
           {
             label: 'View Broadcast Details',
@@ -271,6 +274,18 @@ export const NotificationCenter: React.FC = () => {
           subtitle={`Dispatched ${selectedNotif.createdAt} • ${selectedNotif.channel}`}
           badge={<Badge value={selectedNotif.status} />}
           tabs={['Message Content', 'Delivery Metrics']}
+          actions={[
+            {
+              label: 'Delete Notification',
+              icon: 'trash',
+              variant: 'danger',
+              onClick: () => {
+                deleteNotification(selectedNotif.id);
+                setIsDetailOpen(false);
+                setSelectedNotif(null);
+              },
+            },
+          ]}
         >
           {(activeTab) => (
             <div className="space-y-4">

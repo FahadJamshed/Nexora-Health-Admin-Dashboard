@@ -9,7 +9,7 @@ import { useApp } from '../../context/AppContext';
 import { Invoice, InvoiceLineItem } from '../../types';
 
 export const InvoicesPayables: React.FC = () => {
-  const { invoices, vendors, bankAccounts, addInvoice, recordInvoicePayment, showToast } = useApp();
+  const { invoices, vendors, bankAccounts, addInvoice, recordInvoicePayment, deleteInvoice, navigate, showToast } = useApp();
 
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -274,6 +274,8 @@ export const InvoicesPayables: React.FC = () => {
         searchPlaceholder="Search invoices by ID, vendor, or category..."
         searchKey="invoiceNumber"
         onRowClick={handleOpenDetail}
+        onView={handleOpenDetail}
+        onDelete={(inv) => deleteInvoice(inv.id)}
         actions={[
           {
             label: 'View Printable Invoice',
@@ -285,6 +287,12 @@ export const InvoicesPayables: React.FC = () => {
             icon: 'check',
             onClick: handleOpenPaymentModal,
             show: (inv) => inv.paymentStatus !== 'Paid',
+          },
+          {
+            label: 'View in General Ledger',
+            icon: 'accounting',
+            onClick: () => navigate('Transactions'),
+            show: (inv) => inv.paymentStatus === 'Paid',
           },
         ]}
       />
@@ -298,8 +306,36 @@ export const InvoicesPayables: React.FC = () => {
           subtitle={`${selectedInvoice.vendorName} • Issued ${selectedInvoice.issueDate}`}
           badge={<Badge value={selectedInvoice.paymentStatus} />}
           tabs={['Invoice Bill', 'Payment Log']}
+          actions={[
+            {
+              label: 'Delete Invoice',
+              icon: 'trash',
+              variant: 'danger',
+              onClick: () => {
+                deleteInvoice(selectedInvoice.id);
+                setIsDetailOpen(false);
+                setSelectedInvoice(null);
+              },
+            },
+          ]}
           footer={
-            selectedInvoice.paymentStatus !== 'Paid' && (
+            selectedInvoice.paymentStatus === 'Paid' ? (
+              <div className="flex items-center justify-between w-full">
+                <span className="text-[11px] text-[#16865B] font-semibold flex items-center gap-1">
+                  <Icon name="check" size={14} /> Settled & Disbursed in Ledger
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsDetailOpen(false);
+                    navigate('Transactions');
+                  }}
+                  className="px-3.5 py-1.5 bg-[#2776EA] text-white rounded-lg text-xs font-semibold hover:bg-[#1E65CF]"
+                >
+                  View Ledger Entry →
+                </button>
+              </div>
+            ) : (
               <div className="flex items-center justify-end gap-2 w-full">
                 <button
                   type="button"

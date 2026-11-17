@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from '../../components/ui/Modal';
 import Icon from '../../components/ui/Icon';
 import { useApp } from '../../context/AppContext';
+import { Hospital } from '../../types';
 
 interface AddHospitalModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialData?: Hospital | null;
 }
 
-export const AddHospitalModal: React.FC<AddHospitalModalProps> = ({ isOpen, onClose }) => {
-  const { insuranceCompanies, addHospital } = useApp();
+export const AddHospitalModal: React.FC<AddHospitalModalProps> = ({ isOpen, onClose, initialData }) => {
+  const { insuranceCompanies, addHospital, updateHospital } = useApp();
 
   const [activeTab, setActiveTab] = useState(1);
   const [name, setName] = useState('');
@@ -31,6 +33,28 @@ export const AddHospitalModal: React.FC<AddHospitalModalProps> = ({ isOpen, onCl
   ]);
   const [networkStatus, setNetworkStatus] = useState<'Active' | 'Pending'>('Active');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (initialData) {
+      setName(initialData.name || '');
+      setProviderType(initialData.providerType || 'Hospital');
+      setCity(initialData.city || 'New York');
+      setLocation(initialData.location || 'Central Healthcare District');
+      setAddress(initialData.address || '');
+      setContactPerson(initialData.contactPerson || '');
+      setEmail(initialData.email || '');
+      setPhone(initialData.phone || '');
+      if (initialData.insuranceNetworks && initialData.insuranceNetworks.length > 0) {
+        setSelectedNetworks(initialData.insuranceNetworks);
+      }
+      if (initialData.departments && initialData.departments.length > 0) {
+        setSelectedDepartments(initialData.departments);
+      }
+      setNetworkStatus(initialData.networkStatus === 'Active' ? 'Active' : 'Pending');
+    } else {
+      resetForm();
+    }
+  }, [initialData, isOpen]);
 
   const availableDepartments = [
     'Emergency & Trauma',
@@ -61,20 +85,36 @@ export const AddHospitalModal: React.FC<AddHospitalModalProps> = ({ isOpen, onCl
 
     setIsSubmitting(true);
 
-    addHospital({
-      name: name.trim(),
-      providerType,
-      city,
-      location: location.trim() || `${city} Medical Zone`,
-      address: address.trim() || `450 Healthcare Boulevard, ${city}`,
-      contactPerson: contactPerson.trim() || 'Chief Medical Administrator',
-      email: email.trim() || `admissions@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}.org`,
-      phone: phone.trim() || '+1 (555) 789-2300',
-      insuranceNetworks: selectedNetworks.length > 0 ? selectedNetworks : ['Apex Health Insurance'],
-      departments: selectedDepartments,
-      specialties: ['Cardiology', 'Surgery', 'Pediatrics'],
-      networkStatus,
-    });
+    if (initialData) {
+      updateHospital(initialData.id, {
+        name: name.trim(),
+        providerType,
+        city,
+        location: location.trim() || `${city} Medical Zone`,
+        address: address.trim() || `450 Healthcare Boulevard, ${city}`,
+        contactPerson: contactPerson.trim() || 'Chief Medical Administrator',
+        email: email.trim() || `admissions@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}.org`,
+        phone: phone.trim() || '+1 (555) 789-2300',
+        insuranceNetworks: selectedNetworks.length > 0 ? selectedNetworks : ['Apex Health Insurance'],
+        departments: selectedDepartments,
+        networkStatus,
+      });
+    } else {
+      addHospital({
+        name: name.trim(),
+        providerType,
+        city,
+        location: location.trim() || `${city} Medical Zone`,
+        address: address.trim() || `450 Healthcare Boulevard, ${city}`,
+        contactPerson: contactPerson.trim() || 'Chief Medical Administrator',
+        email: email.trim() || `admissions@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}.org`,
+        phone: phone.trim() || '+1 (555) 789-2300',
+        insuranceNetworks: selectedNetworks.length > 0 ? selectedNetworks : ['Apex Health Insurance'],
+        departments: selectedDepartments,
+        specialties: ['Cardiology', 'Surgery', 'Pediatrics'],
+        networkStatus,
+      });
+    }
 
     setIsSubmitting(false);
     resetForm();
@@ -97,7 +137,7 @@ export const AddHospitalModal: React.FC<AddHospitalModalProps> = ({ isOpen, onCl
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Enroll Healthcare Provider Facility"
+      title={initialData ? `Edit Healthcare Provider: ${initialData.name}` : "Enroll Healthcare Provider Facility"}
       size="lg"
       footer={
         <div className="w-full flex items-center justify-between">

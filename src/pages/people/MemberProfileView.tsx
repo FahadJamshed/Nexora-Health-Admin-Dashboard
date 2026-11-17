@@ -12,7 +12,7 @@ interface MemberProfileViewProps {
 }
 
 export const MemberProfileView: React.FC<MemberProfileViewProps> = ({ member, onBack, onEdit }) => {
-  const { showToast, claims, preAuthorizations, transactions, policies } = useApp();
+  const { showToast, claims, preAuthorizations, transactions, policies, deleteMember } = useApp();
   const [activeTab, setActiveTab] = useState('Overview');
 
   const tabs = [
@@ -58,6 +58,16 @@ export const MemberProfileView: React.FC<MemberProfileViewProps> = ({ member, on
           >
             <Icon name="download" size={13} />
             Download Health Card
+          </button>
+          <button
+            onClick={() => {
+              deleteMember(member.id);
+              onBack();
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-white border border-[#F8D7DA] text-[#D64545] hover:bg-[#FDECEC]"
+          >
+            <Icon name="trash" size={13} />
+            Delete Member
           </button>
         </div>
       </div>

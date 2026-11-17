@@ -9,8 +9,9 @@ import { Customer } from '../../types';
 import AddCustomerModal from './AddCustomerModal';
 
 export const Customers: React.FC = () => {
-  const { customers, policies, claims, transactions, showToast } = useApp();
+  const { customers, policies, claims, transactions, navigate, showToast, deleteCustomer } = useApp();
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('Overview');
@@ -118,7 +119,10 @@ export const Customers: React.FC = () => {
         primaryAction={{
           label: 'Add Customer',
           icon: 'plus',
-          onClick: () => setIsAddOpen(true),
+          onClick: () => {
+            setEditingCustomer(null);
+            setIsAddOpen(true);
+          },
         }}
       />
 
@@ -149,6 +153,36 @@ export const Customers: React.FC = () => {
         searchPlaceholder="Search customer by name, SSN / ID, email, or company..."
         statusKey="status"
         onView={handleView}
+        onEdit={(c) => {
+          setEditingCustomer(c);
+          setIsAddOpen(true);
+        }}
+        onDelete={(c) => deleteCustomer(c.id)}
+        actions={[
+          {
+            label: 'View Customer Account',
+            icon: 'eye',
+            onClick: handleView,
+          },
+          {
+            label: 'Edit Profile',
+            icon: 'edit',
+            onClick: (c) => {
+              setEditingCustomer(c);
+              setIsAddOpen(true);
+            },
+          },
+          {
+            label: 'View Insured Policies',
+            icon: 'policies',
+            onClick: () => navigate('Policies'),
+          },
+          {
+            label: 'View Member Census',
+            icon: 'member',
+            onClick: () => navigate('Insured Members'),
+          },
+        ]}
       />
 
       {/* Customer Detail Drawer */}
@@ -168,9 +202,30 @@ export const Customers: React.FC = () => {
           onTabChange={setActiveTab}
           actions={[
             {
+              label: 'Edit Customer',
+              icon: 'edit',
+              variant: 'primary',
+              onClick: () => {
+                const cust = selectedCustomer;
+                setIsDetailOpen(false);
+                setEditingCustomer(cust);
+                setIsAddOpen(true);
+              },
+            },
+            {
               label: 'Export Statement',
               icon: 'download',
               onClick: () => showToast('Export Complete', `Customer statement exported for ${selectedCustomer.name}.`),
+            },
+            {
+              label: 'Delete Customer',
+              icon: 'trash',
+              variant: 'danger',
+              onClick: () => {
+                deleteCustomer(selectedCustomer.id);
+                setIsDetailOpen(false);
+                setSelectedCustomer(null);
+              },
             },
           ]}
         >
@@ -458,7 +513,14 @@ export const Customers: React.FC = () => {
       )}
 
       {/* Add Customer Modal */}
-      <AddCustomerModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} />
+      <AddCustomerModal
+        isOpen={isAddOpen}
+        initialData={editingCustomer}
+        onClose={() => {
+          setIsAddOpen(false);
+          setEditingCustomer(null);
+        }}
+      />
     </div>
   );
 };

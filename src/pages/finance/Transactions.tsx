@@ -9,7 +9,7 @@ import { useApp } from '../../context/AppContext';
 import { Transaction } from '../../types';
 
 export const Transactions: React.FC = () => {
-  const { transactions, bankAccounts, showToast } = useApp();
+  const { transactions, bankAccounts, navigate, showToast, addTransaction, deleteTransaction } = useApp();
 
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -55,25 +55,15 @@ export const Transactions: React.FC = () => {
       return;
     }
 
-    const newTx: Transaction = {
-      id: `TX-${Date.now()}`,
-      txNumber: `TX-${Math.floor(100000 + Math.random() * 900000)}`,
+    addTransaction({
       reference: txReference,
       type: txType,
       relatedEntity: relatedEntity,
       amount: Number(txAmount),
       paymentMethod: txMethod,
-      date: new Date().toISOString().split('T')[0],
-      status: 'Completed',
       account: txAccount,
-    };
+    });
 
-    transactions.unshift(newTx);
-    showToast(
-      'Transaction Recorded',
-      `Successfully recorded transaction ${newTx.txNumber} for PKR ${newTx.amount.toLocaleString()}.`,
-      'success'
-    );
     setIsRecordModalOpen(false);
     setRelatedEntity('');
   };
@@ -282,11 +272,30 @@ export const Transactions: React.FC = () => {
         searchPlaceholder="Search transactions by ID, reference, or counterparty..."
         searchKey="txNumber"
         onRowClick={handleOpenDetail}
+        onView={handleOpenDetail}
+        onDelete={(t) => deleteTransaction(t.id)}
         actions={[
           {
             label: 'View Remittance Receipt',
             icon: 'eye',
             onClick: handleOpenDetail,
+          },
+          {
+            label: 'View Source Settlement',
+            icon: 'settlements',
+            onClick: () => navigate('Settlements'),
+            show: (t) => t.type === 'Claim Settlement' || t.type === 'Provider Payment',
+          },
+          {
+            label: 'View Source Vendor Invoice',
+            icon: 'invoices',
+            onClick: () => navigate('Invoices & Payables'),
+            show: (t) => t.type === 'Vendor Invoice',
+          },
+          {
+            label: 'Reconcile in Bank Feed',
+            icon: 'bank',
+            onClick: () => navigate('Bank Reconciliation'),
           },
           {
             label: 'Download Advice',
@@ -305,6 +314,65 @@ export const Transactions: React.FC = () => {
           subtitle={`Reference: ${selectedTx.reference} • ${selectedTx.date}`}
           badge={<Badge value={selectedTx.status} />}
           tabs={['Receipt Details', 'Audit Record']}
+          actions={[
+            {
+              label: 'Delete Transaction',
+              icon: 'trash',
+              variant: 'danger',
+              onClick: () => {
+                deleteTransaction(selectedTx.id);
+                setIsDetailOpen(false);
+                setSelectedTx(null);
+              },
+            },
+          ]}
+          footer={
+            <div className="flex items-center justify-between w-full">
+              <button
+                type="button"
+                onClick={() => setIsDetailOpen(false)}
+                className="px-3.5 py-1.5 border border-[#E5EAF1] rounded-lg text-xs font-semibold text-[#66758A] hover:bg-[#F6F8FC]"
+              >
+                Close
+              </button>
+              <div className="flex items-center gap-2">
+                {selectedTx.type === 'Claim Settlement' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsDetailOpen(false);
+                      navigate('Settlements');
+                    }}
+                    className="px-3 py-1.5 bg-[#EAF2FF] border border-[#2776EA]/30 text-[#2776EA] rounded-lg text-xs font-semibold hover:bg-[#d8e7fe]"
+                  >
+                    View in Settlements →
+                  </button>
+                )}
+                {selectedTx.type === 'Vendor Invoice' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsDetailOpen(false);
+                      navigate('Invoices & Payables');
+                    }}
+                    className="px-3 py-1.5 bg-[#EAF2FF] border border-[#2776EA]/30 text-[#2776EA] rounded-lg text-xs font-semibold hover:bg-[#d8e7fe]"
+                  >
+                    View in Invoices →
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsDetailOpen(false);
+                    navigate('Bank Reconciliation');
+                  }}
+                  className="px-3.5 py-1.5 bg-[#2776EA] text-white rounded-lg text-xs font-semibold hover:bg-[#1E65CF]"
+                >
+                  Bank Reconciliation →
+                </button>
+              </div>
+            </div>
+          }
         >
           {(activeTab) => (
             <div className="space-y-4">

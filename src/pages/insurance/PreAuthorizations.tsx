@@ -17,6 +17,8 @@ export const PreAuthorizations: React.FC = () => {
     rejectPreAuth,
     requestPreAuthInfo,
     addPreAuth,
+    deletePreAuth,
+    navigate,
     showToast,
   } = useApp();
 
@@ -337,6 +339,8 @@ export const PreAuthorizations: React.FC = () => {
         searchPlaceholder="Search authorizations by ID, member, hospital, or procedure..."
         searchKey="authNumber"
         onRowClick={handleOpenDetail}
+        onView={handleOpenDetail}
+        onDelete={(pa) => deletePreAuth(pa.id)}
         actions={[
           {
             label: 'View Clinical File',
@@ -355,6 +359,12 @@ export const PreAuthorizations: React.FC = () => {
             onClick: handleOpenRejectModal,
             show: (pa) => pa.status === 'Pending' || pa.status === 'Under Review',
           },
+          {
+            label: 'View in Claims Management',
+            icon: 'claims',
+            onClick: () => navigate('Claims Management'),
+            show: (pa) => pa.status === 'Approved',
+          },
         ]}
       />
 
@@ -367,8 +377,36 @@ export const PreAuthorizations: React.FC = () => {
           subtitle={`${selectedAuth.hospitalName} • Requested ${selectedAuth.requestDate}`}
           badge={<Badge value={selectedAuth.status} />}
           tabs={['Overview', 'Clinical Justification', 'Adjudication Notes']}
+          actions={[
+            {
+              label: 'Delete Pre-Auth',
+              icon: 'trash',
+              variant: 'danger',
+              onClick: () => {
+                deletePreAuth(selectedAuth.id);
+                setIsDetailOpen(false);
+                setSelectedAuth(null);
+              },
+            },
+          ]}
           footer={
-            (selectedAuth.status === 'Pending' || selectedAuth.status === 'Under Review') && (
+            selectedAuth.status === 'Approved' ? (
+              <div className="flex items-center justify-between w-full">
+                <span className="text-[11px] text-[#16865B] font-semibold flex items-center gap-1">
+                  <Icon name="check" size={14} /> Approved & Ready for Admission
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsDetailOpen(false);
+                    navigate('Claims Management');
+                  }}
+                  className="px-3.5 py-1.5 bg-[#2776EA] text-white rounded-lg text-xs font-semibold hover:bg-[#1f5ec2]"
+                >
+                  View in Claims Management →
+                </button>
+              </div>
+            ) : (selectedAuth.status === 'Pending' || selectedAuth.status === 'Under Review') ? (
               <div className="flex items-center justify-end gap-2 w-full">
                 <button
                   type="button"
@@ -392,7 +430,7 @@ export const PreAuthorizations: React.FC = () => {
                   Approve Pre-Auth
                 </button>
               </div>
-            )
+            ) : null
           }
         >
           {(activeTab) => (

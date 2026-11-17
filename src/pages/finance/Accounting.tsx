@@ -275,6 +275,14 @@ export const Accounting: React.FC = () => {
           setSelectedAccount(acc);
           setIsAccountDrawerOpen(true);
         }}
+        onView={(acc) => {
+          setSelectedAccount(acc);
+          setIsAccountDrawerOpen(true);
+        }}
+        onDelete={(acc) => {
+          setAccounts((prev) => prev.filter((a) => a.code !== acc.code));
+          showToast('Account Removed', `GL Account ${acc.code} removed from chart of accounts.`, 'info');
+        }}
         actions={[
           {
             label: 'View Account Ledger Card',
@@ -311,6 +319,19 @@ export const Accounting: React.FC = () => {
           subtitle={selectedAccount.name}
           badge={<Badge value={selectedAccount.status} />}
           tabs={['Account Ledger & Activity', 'Double-Entry Postings', 'IFRS 17 Technical Notes']}
+          actions={[
+            {
+              label: 'Delete Account',
+              icon: 'trash',
+              variant: 'danger',
+              onClick: () => {
+                setAccounts((prev) => prev.filter((a) => a.code !== selectedAccount.code));
+                setIsAccountDrawerOpen(false);
+                showToast('Account Removed', `GL Account ${selectedAccount.code} removed.`, 'info');
+                setSelectedAccount(null);
+              },
+            },
+          ]}
           footer={
             <div className="flex items-center justify-end gap-2 w-full">
               <button

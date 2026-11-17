@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from '../../components/ui/Modal';
 import Icon from '../../components/ui/Icon';
 import { useApp } from '../../context/AppContext';
+import { CorporateClient } from '../../types';
 
 interface AddCorporateClientModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialData?: CorporateClient | null;
 }
 
-export const AddCorporateClientModal: React.FC<AddCorporateClientModalProps> = ({ isOpen, onClose }) => {
-  const { insuranceCompanies, addCorporateClient } = useApp();
+export const AddCorporateClientModal: React.FC<AddCorporateClientModalProps> = ({ isOpen, onClose, initialData }) => {
+  const { insuranceCompanies, addCorporateClient, updateCorporateClient } = useApp();
 
   const [activeTab, setActiveTab] = useState(1);
   const [name, setName] = useState('');
@@ -24,6 +26,23 @@ export const AddCorporateClientModal: React.FC<AddCorporateClientModalProps> = (
   const [status, setStatus] = useState<'Active' | 'Pending' | 'Under Review'>('Active');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (initialData) {
+      setName(initialData.name || '');
+      setSelectedInsurerId(initialData.insuranceCompanyId || insuranceCompanies[0]?.id || 'ins-001');
+      setContactPerson(initialData.contactPerson || '');
+      setEmail(initialData.email || '');
+      setPhone(initialData.phone || '');
+      setTotalEmployees(initialData.totalEmployees || 350);
+      setAnnualPremium(initialData.annualPremium || 'PKR 18,500,000');
+      setContractStart(initialData.contractStart || '01 Jan 2025');
+      setContractEnd(initialData.contractEnd || '31 Dec 2025');
+      setStatus(initialData.status === 'Active' ? 'Active' : 'Pending');
+    } else {
+      resetForm();
+    }
+  }, [initialData, isOpen]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
@@ -31,19 +50,35 @@ export const AddCorporateClientModal: React.FC<AddCorporateClientModalProps> = (
     setIsSubmitting(true);
     const chosenInsurer = insuranceCompanies.find((ins) => ins.id === selectedInsurerId);
 
-    addCorporateClient({
-      name: name.trim(),
-      insuranceCompanyId: selectedInsurerId,
-      insuranceCompanyName: chosenInsurer?.name || 'Apex Health Insurance',
-      contactPerson: contactPerson.trim() || 'HR Benefits Director',
-      email: email.trim() || `benefits@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
-      phone: phone.trim() || '+1 (555) 420-1980',
-      totalEmployees: Number(totalEmployees) || 100,
-      annualPremium: annualPremium.trim() || 'PKR 12,000,000',
-      contractStart,
-      contractEnd,
-      status: status === 'Under Review' ? 'Pending' : status,
-    });
+    if (initialData) {
+      updateCorporateClient(initialData.id, {
+        name: name.trim(),
+        insuranceCompanyId: selectedInsurerId,
+        insuranceCompanyName: chosenInsurer?.name || initialData.insuranceCompanyName,
+        contactPerson: contactPerson.trim() || 'HR Benefits Director',
+        email: email.trim() || `benefits@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
+        phone: phone.trim() || '+1 (555) 420-1980',
+        totalEmployees: Number(totalEmployees) || 100,
+        annualPremium: annualPremium.trim() || 'PKR 12,000,000',
+        contractStart,
+        contractEnd,
+        status: status === 'Under Review' ? 'Pending' : status,
+      });
+    } else {
+      addCorporateClient({
+        name: name.trim(),
+        insuranceCompanyId: selectedInsurerId,
+        insuranceCompanyName: chosenInsurer?.name || 'Apex Health Insurance',
+        contactPerson: contactPerson.trim() || 'HR Benefits Director',
+        email: email.trim() || `benefits@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
+        phone: phone.trim() || '+1 (555) 420-1980',
+        totalEmployees: Number(totalEmployees) || 100,
+        annualPremium: annualPremium.trim() || 'PKR 12,000,000',
+        contractStart,
+        contractEnd,
+        status: status === 'Under Review' ? 'Pending' : status,
+      });
+    }
 
     setIsSubmitting(false);
     resetForm();
@@ -65,7 +100,7 @@ export const AddCorporateClientModal: React.FC<AddCorporateClientModalProps> = (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Register Corporate Client"
+      title={initialData ? `Edit Corporate Client: ${initialData.name}` : "Register Corporate Client"}
       size="lg"
       footer={
         <div className="w-full flex items-center justify-between">

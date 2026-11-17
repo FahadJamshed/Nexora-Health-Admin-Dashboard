@@ -5,8 +5,8 @@ import Modal from '../../components/ui/Modal';
 import { useApp } from '../../context/AppContext';
 
 export const PermissionsMatrix: React.FC = () => {
-  const { roles, updateRolePermission, showToast, resetToDefaults } = useApp();
-  const [selectedRoleId, setSelectedRoleId] = useState<string>(roles[0]?.id || 'ROLE-01');
+  const { roles, updateRolePermission, addRole, deleteRole, showToast, resetToDefaults } = useApp();
+  const [selectedRoleId, setSelectedRoleId] = useState<string>(roles[0]?.id || 'role-001');
   const [isAddRoleOpen, setIsAddRoleOpen] = useState(false);
   const [activeRoleTab, setActiveRoleTab] = useState<'profile' | 'scope'>('profile');
 
@@ -33,6 +33,27 @@ export const PermissionsMatrix: React.FC = () => {
     );
   };
 
+  const handleCloneRole = () => {
+    if (!selectedRole) return;
+    const cloned = addRole({
+      name: `${selectedRole.name} (Copy)`,
+      description: `Cloned snapshot of ${selectedRole.name}. ${selectedRole.description}`,
+      permissions: selectedRole.permissions.map((p) => ({ ...p })),
+    });
+    setSelectedRoleId(cloned.id);
+  };
+
+  const handleDeleteCurrentRole = () => {
+    if (!selectedRole) return;
+    if (selectedRole.id === 'role-001' || selectedRole.name.toLowerCase().includes('super admin')) {
+      showToast('Action Prohibited', 'The Super Administrator root role cannot be deleted.', 'error');
+      return;
+    }
+    const roleName = selectedRole.name;
+    deleteRole(selectedRole.id);
+    setSelectedRoleId(roles[0]?.id || 'role-001');
+  };
+
   const handleCreateRole = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newRoleName.trim()) {
@@ -40,11 +61,42 @@ export const PermissionsMatrix: React.FC = () => {
       return;
     }
 
-    showToast(
-      'Role Provisioned',
-      `Created custom role "${newRoleName}" with ${baselineAccess} baseline policy.`,
-      'success'
-    );
+    const defaultModules = [
+      'Overview & Reports',
+      'Organizations',
+      'People & Members',
+      'Insurance Plans & Policies',
+      'Claims & Pre-Authorizations',
+      'Settlements & Finance',
+      'Audit Logs & System Settings',
+    ];
+
+    const permissions = defaultModules.map((module) => {
+      if (baselineAccess === 'Read Only') {
+        return { module, view: true, create: false, edit: false, delete: false, approve: false, export: true };
+      }
+      if (baselineAccess === 'Privileged') {
+        return { module, view: true, create: true, edit: true, delete: true, approve: true, export: true };
+      }
+      // Standard Operational
+      return {
+        module,
+        view: true,
+        create: module !== 'Audit Logs & System Settings',
+        edit: module !== 'Audit Logs & System Settings',
+        delete: false,
+        approve: module.includes('Claims'),
+        export: true,
+      };
+    });
+
+    const newRole = addRole({
+      name: newRoleName.trim(),
+      description: newRoleDesc.trim() || `Configured with ${baselineAccess} baseline access.`,
+      permissions,
+    });
+
+    setSelectedRoleId(newRole.id);
     setIsAddRoleOpen(false);
     setNewRoleName('');
     setNewRoleDesc('');
@@ -70,8 +122,17 @@ export const PermissionsMatrix: React.FC = () => {
           {
             label: 'Clone Role',
             icon: 'copy',
-            onClick: () => showToast('Role Cloned', `Created working copy of ${selectedRole?.name}.`, 'info'),
+            onClick: handleCloneRole,
           },
+          ...(selectedRole && selectedRole.id !== 'role-001' && !selectedRole.name.toLowerCase().includes('super admin')
+            ? [
+                {
+                  label: 'Delete Role',
+                  icon: 'trash',
+                  onClick: handleDeleteCurrentRole,
+                },
+              ]
+            : []),
           {
             label: 'Export Matrix (CSV)',
             icon: 'export',
@@ -119,6 +180,17 @@ export const PermissionsMatrix: React.FC = () => {
               <span className="text-[11px] px-2 py-0.5 rounded bg-white/10 text-white/90">
                 Security Policy Group
               </span>
+              {selectedRole.id !== 'role-001' && !selectedRole.name.toLowerCase().includes('super admin') && (
+                <button
+                  type="button"
+                  onClick={handleDeleteCurrentRole}
+                  className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-500/20 hover:bg-red-500/30 text-red-200 text-xs font-medium transition-colors"
+                  title="Delete this custom role"
+                >
+                  <Icon name="trash" className="w-3.5 h-3.5" />
+                  Delete Role
+                </button>
+              )}
             </div>
             <p className="text-xs text-[#E5EAF1]/80 mt-0.5">{selectedRole.description}</p>
           </div>
@@ -142,7 +214,8 @@ export const PermissionsMatrix: React.FC = () => {
           </div>
           <button
             onClick={() => {
-              showToast('Resetting', 'Re-applying default baseline permissions.', 'info');
+              resetToDefaults();
+              showToast('Reset Baseline', 'Re-applied default system permissions.', 'info');
             }}
             className="text-xs text-[#66758A] hover:text-[#102A43] font-medium"
           >

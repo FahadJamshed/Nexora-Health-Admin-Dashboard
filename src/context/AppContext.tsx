@@ -123,24 +123,35 @@ interface AppContextType {
   updateCompany: (id: string, updates: Partial<Company>) => void;
   deleteCompany: (id: string) => void;
   addCorporateClient: (data: Partial<CorporateClient>) => CorporateClient;
+  updateCorporateClient: (id: string, updates: Partial<CorporateClient>) => void;
+  deleteCorporateClient: (id: string) => void;
   addInsuranceCompany: (data: Partial<InsuranceCompany>) => InsuranceCompany;
+  updateInsuranceCompany: (id: string, updates: Partial<InsuranceCompany>) => void;
+  deleteInsuranceCompany: (id: string) => void;
   addHospital: (data: Partial<Hospital>) => Hospital;
-  addSettlement: (data: Partial<Settlement>) => Settlement;
+  updateHospital: (id: string, updates: Partial<Hospital>) => void;
+  deleteHospital: (id: string) => void;
 
   // Workflow 2: Members & Customers
+  addCustomer: (data: Partial<Customer>) => Customer;
+  updateCustomer: (id: string, updates: Partial<Customer>) => void;
+  deleteCustomer: (id: string) => void;
   addMember: (data: Partial<InsuredMember>) => InsuredMember;
   updateMember: (id: string, updates: Partial<InsuredMember>) => void;
   deleteMember: (id: string) => void;
-  addCustomer: (data: Partial<Customer>) => Customer;
 
   // Workflow 3: Policies & Plans
   addPolicy: (data: Partial<Policy>) => Policy;
   updatePolicy: (id: string, updates: Partial<Policy>) => void;
+  deletePolicy: (id: string) => void;
   addPlan: (data: Partial<InsurancePlan>) => InsurancePlan;
   updatePlan: (id: string, updates: Partial<InsurancePlan>) => void;
+  deletePlan: (id: string) => void;
 
   // Workflow 4: Claims Processing
   addClaim: (data: Partial<Claim>) => Claim;
+  updateClaim: (id: string, updates: Partial<Claim>) => void;
+  deleteClaim: (id: string) => void;
   approveClaim: (claimId: string, approvedAmount: number, notes?: string) => void;
   rejectClaim: (claimId: string, reason: string, notes?: string) => void;
   requestClaimInfo: (claimId: string, message: string) => void;
@@ -149,11 +160,16 @@ interface AppContextType {
 
   // Workflow 5: Pre-Authorizations
   addPreAuth: (data: Partial<PreAuthorization>) => PreAuthorization;
+  updatePreAuth: (id: string, updates: Partial<PreAuthorization>) => void;
+  deletePreAuth: (id: string) => void;
   approvePreAuth: (authId: string, approvedAmount?: number) => void;
   rejectPreAuth: (authId: string, reason: string) => void;
   requestPreAuthInfo: (authId: string, message: string) => void;
 
-  // Workflow 6: Settlements
+  // Workflow 6: Settlements & Transactions
+  addSettlement: (data: Partial<Settlement>) => Settlement;
+  updateSettlement: (id: string, updates: Partial<Settlement>) => void;
+  deleteSettlement: (id: string) => void;
   processSettlement: (
     settlementId: string,
     paymentMethod: 'Bank Transfer' | 'EFT' | 'Cheque',
@@ -161,25 +177,36 @@ interface AppContextType {
     paymentReference: string
   ) => void;
   markSettlementPaid: (settlementId: string, paymentReference: string) => void;
+  addTransaction: (data: Partial<Transaction>) => Transaction;
+  updateTransaction: (id: string, updates: Partial<Transaction>) => void;
+  deleteTransaction: (id: string) => void;
 
   // Workflow 7: Invoices
   addInvoice: (data: Partial<Invoice>) => Invoice;
+  updateInvoice: (id: string, updates: Partial<Invoice>) => void;
+  deleteInvoice: (id: string) => void;
   recordInvoicePayment: (invoiceId: string, amount: number) => void;
 
   // Workflow 8: Bank Reconciliation
   toggleMatchBankRecord: (stmtId: string, txId?: string) => void;
   addBankAdjustment: (accountId: string, amount: number, description: string, type: 'Debit' | 'Credit') => void;
   completeReconciliation: (accountId: string) => void;
+  deleteBankStatement: (id: string) => void;
 
   // Workflow 9: Notifications
   addNotification: (data: Partial<NotificationItem>) => NotificationItem;
+  deleteNotification: (id: string) => void;
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
 
-  // Workflow 10: Permissions & Admins
+  // Workflow 10: Permissions & Admins & Roles
   updateRolePermission: (roleId: string, moduleName: string, permissionKey: string, value: boolean) => void;
+  addRole: (data: Partial<RoleDefinition>) => RoleDefinition;
+  updateRole: (id: string, updates: Partial<RoleDefinition>) => void;
+  deleteRole: (id: string) => void;
   addAdminUser: (data: Partial<AdminUser>) => AdminUser;
   updateAdminUser: (id: string, updates: Partial<AdminUser>) => void;
+  deleteAdminUser: (id: string) => void;
 
   // Utility
   resetToDefaults: () => void;
@@ -446,6 +473,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return newClient;
   };
 
+  const updateCorporateClient = (id: string, updates: Partial<CorporateClient>) => {
+    setCorporateClients((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
+    addAuditLog('Corporate Client Updated', 'Organizations', `Updated corporate client: ${id}`);
+    showToast('Client Updated', 'Corporate client details have been successfully saved.', 'success');
+  };
+
+  const deleteCorporateClient = (id: string) => {
+    const item = corporateClients.find((c) => c.id === id);
+    setCorporateClients((prev) => prev.filter((c) => c.id !== id));
+    addAuditLog('Corporate Client Deleted', 'Organizations', `Deleted corporate client: ${item?.name || id}`, 'Warning');
+    showToast('Client Deleted', `${item?.name || 'Corporate client'} removed from records.`, 'info');
+  };
+
   const addInsuranceCompany = (data: Partial<InsuranceCompany>): InsuranceCompany => {
     const id = `ins-0${insuranceCompanies.length + 1}`;
     const newIns: InsuranceCompany = {
@@ -478,6 +518,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addAuditLog('Insurance Carrier Added', 'Organizations', `Registered underwriting carrier: ${newIns.name}`);
     showToast('Insurance Carrier Added', `${newIns.name} successfully registered.`);
     return newIns;
+  };
+
+  const updateInsuranceCompany = (id: string, updates: Partial<InsuranceCompany>) => {
+    setInsuranceCompanies((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
+    addAuditLog('Insurance Carrier Updated', 'Organizations', `Updated insurance carrier: ${id}`);
+    showToast('Carrier Updated', 'Insurance provider details saved successfully.', 'success');
+  };
+
+  const deleteInsuranceCompany = (id: string) => {
+    const item = insuranceCompanies.find((c) => c.id === id);
+    setInsuranceCompanies((prev) => prev.filter((c) => c.id !== id));
+    addAuditLog('Insurance Carrier Deleted', 'Organizations', `Deleted insurance carrier: ${item?.name || id}`, 'Warning');
+    showToast('Carrier Deleted', `${item?.name || 'Insurance provider'} removed from records.`, 'info');
   };
 
   const addHospital = (data: Partial<Hospital>): Hospital => {
@@ -516,6 +569,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return newHosp;
   };
 
+  const updateHospital = (id: string, updates: Partial<Hospital>) => {
+    setHospitals((prev) => prev.map((h) => (h.id === id ? { ...h, ...updates } : h)));
+    addAuditLog('Hospital Updated', 'Organizations', `Updated hospital provider: ${id}`);
+    showToast('Facility Updated', 'Healthcare provider details saved.', 'success');
+  };
+
+  const deleteHospital = (id: string) => {
+    const item = hospitals.find((h) => h.id === id);
+    setHospitals((prev) => prev.filter((h) => h.id !== id));
+    addAuditLog('Hospital Deleted', 'Organizations', `Deleted healthcare facility: ${item?.name || id}`, 'Warning');
+    showToast('Facility Deleted', `${item?.name || 'Hospital'} removed from panel records.`, 'info');
+  };
+
   // ─── Workflow 2: People (Members & Customers) ────────────────────────────────
   const addCustomer = (data: Partial<Customer>): Customer => {
     const id = `CUST-0${customers.length + 1}`;
@@ -540,6 +606,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setCustomers((prev) => [newCust, ...prev]);
     return newCust;
+  };
+
+  const updateCustomer = (id: string, updates: Partial<Customer>) => {
+    setCustomers((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
+    addAuditLog('Customer Profile Updated', 'People', `Updated customer: ${id}`);
+    showToast('Customer Updated', 'Customer account details have been saved.', 'success');
+  };
+
+  const deleteCustomer = (id: string) => {
+    const item = customers.find((c) => c.id === id);
+    setCustomers((prev) => prev.filter((c) => c.id !== id));
+    addAuditLog('Customer Deleted', 'People', `Deleted customer: ${item?.name || id}`, 'Warning');
+    showToast('Customer Deleted', `${item?.name || 'Customer'} removed from system.`, 'info');
   };
 
   const addMember = (data: Partial<InsuredMember>): InsuredMember => {
@@ -624,6 +703,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('Policy Updated', 'Policy terms and dates saved.');
   };
 
+  const deletePolicy = (id: string) => {
+    const item = policies.find((p) => p.id === id);
+    setPolicies((prev) => prev.filter((p) => p.id !== id));
+    addAuditLog('Policy Deleted', 'Insurance Operations', `Deleted insurance policy: ${item?.policyNumber || id}`, 'Warning');
+    showToast('Policy Deleted', `Policy ${item?.policyNumber || id} removed from registry.`, 'info');
+  };
+
   const addPlan = (data: Partial<InsurancePlan>): InsurancePlan => {
     const id = `pln-00${insurancePlans.length + 1}`;
     const newPlan: InsurancePlan = {
@@ -657,6 +743,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setInsurancePlans((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
     addAuditLog('Plan Updated', 'Insurance Operations', `Modified plan details: ${id}`);
     showToast('Plan Updated', 'Insurance plan limits and benefits updated.');
+  };
+
+  const deletePlan = (id: string) => {
+    const item = insurancePlans.find((p) => p.id === id);
+    setInsurancePlans((prev) => prev.filter((p) => p.id !== id));
+    addAuditLog('Insurance Plan Deleted', 'Insurance Operations', `Deleted coverage plan: ${item?.name || id}`, 'Warning');
+    showToast('Plan Deleted', `${item?.name || 'Insurance plan'} removed from catalog.`, 'info');
   };
 
   // ─── Workflow 4: Claims Processing ───────────────────────────────────────────
@@ -846,6 +939,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('Claim Paid', 'Claim marked as paid.');
   };
 
+  const updateClaim = (id: string, updates: Partial<Claim>) => {
+    setClaims((prev) => prev.map((c) => (c.id === id || c.claimNumber === id ? { ...c, ...updates } : c)));
+    addAuditLog('Claim Updated', 'Claims', `Updated claim record: ${id}`);
+    showToast('Claim Updated', 'Claim record has been saved.', 'success');
+  };
+
+  const deleteClaim = (id: string) => {
+    const item = claims.find((c) => c.id === id || c.claimNumber === id);
+    setClaims((prev) => prev.filter((c) => c.id !== id && c.claimNumber !== id));
+    addAuditLog('Claim Deleted', 'Claims', `Deleted claim: ${item?.claimNumber || id}`, 'Warning');
+    showToast('Claim Deleted', `Claim ${item?.claimNumber || id} removed from records.`, 'info');
+  };
+
   // ─── Workflow 5: Pre-Authorizations ──────────────────────────────────────────
   const addPreAuth = (data: Partial<PreAuthorization>): PreAuthorization => {
     const num = `AUTH-20250${preAuthorizations.length + 1}`;
@@ -921,6 +1027,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       )
     );
     showToast('Info Requested', `Clarification requested for ${authId}.`, 'info');
+  };
+
+  const updatePreAuth = (id: string, updates: Partial<PreAuthorization>) => {
+    setPreAuthorizations((prev) => prev.map((a) => (a.id === id || a.authNumber === id ? { ...a, ...updates } : a)));
+    addAuditLog('Pre-Authorization Updated', 'Insurance Operations', `Updated pre-auth request: ${id}`);
+    showToast('Pre-Auth Updated', 'Pre-authorization request details saved.', 'success');
+  };
+
+  const deletePreAuth = (id: string) => {
+    const item = preAuthorizations.find((a) => a.id === id || a.authNumber === id);
+    setPreAuthorizations((prev) => prev.filter((a) => a.id !== id && a.authNumber !== id));
+    addAuditLog('Pre-Authorization Deleted', 'Insurance Operations', `Deleted pre-auth request: ${item?.authNumber || id}`, 'Warning');
+    showToast('Pre-Auth Deleted', `Request ${item?.authNumber || id} removed from records.`, 'info');
   };
 
   // ─── Workflow 6: Settlements & Financial Transactions ─────────────────────────
@@ -1003,6 +1122,53 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     processSettlement(settlementId, 'Bank Transfer', 'Chase Commercial (4728)', paymentReference || `REF-${Date.now()}`);
   };
 
+  const updateSettlement = (id: string, updates: Partial<Settlement>) => {
+    setSettlements((prev) => prev.map((s) => (s.id === id || s.settlementNumber === id ? { ...s, ...updates } : s)));
+    addAuditLog('Settlement Updated', 'Settlements', `Updated settlement batch: ${id}`);
+    showToast('Settlement Updated', 'Settlement batch details saved.', 'success');
+  };
+
+  const deleteSettlement = (id: string) => {
+    const item = settlements.find((s) => s.id === id || s.settlementNumber === id);
+    setSettlements((prev) => prev.filter((s) => s.id !== id && s.settlementNumber !== id));
+    addAuditLog('Settlement Deleted', 'Settlements', `Deleted settlement batch: ${item?.settlementNumber || id}`, 'Warning');
+    showToast('Settlement Deleted', `Batch ${item?.settlementNumber || id} removed from ledger.`, 'info');
+  };
+
+  const addTransaction = (data: Partial<Transaction>): Transaction => {
+    const num = `TX-20250${transactions.length + 1}`;
+    const id = `tx-0${transactions.length + 1}`;
+    const newTx: Transaction = {
+      id,
+      txNumber: num,
+      reference: data.reference || `REF-${Math.floor(100000 + Math.random() * 900000)}`,
+      type: data.type || 'Provider Payment',
+      relatedEntity: data.relatedEntity || 'General Provider',
+      amount: data.amount || 50000,
+      paymentMethod: data.paymentMethod || 'Bank Transfer',
+      date: 'Today',
+      status: data.status || 'Completed',
+      account: data.account || 'Chase Operating (4728)',
+    };
+    setTransactions((prev) => [newTx, ...prev]);
+    addAuditLog('Transaction Recorded', 'Transactions', `Created manual transaction ${newTx.txNumber} (PKR ${newTx.amount.toLocaleString()})`);
+    showToast('Transaction Created', `Transaction ${newTx.txNumber} logged successfully.`, 'success');
+    return newTx;
+  };
+
+  const updateTransaction = (id: string, updates: Partial<Transaction>) => {
+    setTransactions((prev) => prev.map((t) => (t.id === id || t.txNumber === id ? { ...t, ...updates } : t)));
+    addAuditLog('Transaction Updated', 'Transactions', `Updated transaction details: ${id}`);
+    showToast('Transaction Updated', 'Transaction record saved.', 'success');
+  };
+
+  const deleteTransaction = (id: string) => {
+    const item = transactions.find((t) => t.id === id || t.txNumber === id);
+    setTransactions((prev) => prev.filter((t) => t.id !== id && t.txNumber !== id));
+    addAuditLog('Transaction Deleted', 'Transactions', `Deleted transaction: ${item?.txNumber || id}`, 'Warning');
+    showToast('Transaction Deleted', `Transaction ${item?.txNumber || id} removed from ledger.`, 'info');
+  };
+
   // ─── Workflow 7: Invoices & Payables ──────────────────────────────────────────
   const addInvoice = (data: Partial<Invoice>): Invoice => {
     const num = `INV-20250${invoices.length + 1}`;
@@ -1072,6 +1238,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('Payment Recorded', `Payment of PKR ${amount.toLocaleString()} applied to ${inv.invoiceNumber}.`);
   };
 
+  const updateInvoice = (id: string, updates: Partial<Invoice>) => {
+    setInvoices((prev) => prev.map((inv) => (inv.id === id || inv.invoiceNumber === id ? { ...inv, ...updates } : inv)));
+    addAuditLog('Invoice Updated', 'Invoices & Payables', `Updated invoice details: ${id}`);
+    showToast('Invoice Updated', 'Invoice record saved.', 'success');
+  };
+
+  const deleteInvoice = (id: string) => {
+    const item = invoices.find((inv) => inv.id === id || inv.invoiceNumber === id);
+    setInvoices((prev) => prev.filter((inv) => inv.id !== id && inv.invoiceNumber !== id));
+    addAuditLog('Invoice Deleted', 'Invoices & Payables', `Deleted invoice: ${item?.invoiceNumber || id}`, 'Warning');
+    showToast('Invoice Deleted', `Invoice ${item?.invoiceNumber || id} removed from payables.`, 'info');
+  };
+
   // ─── Workflow 8: Bank Reconciliation ─────────────────────────────────────────
   const toggleMatchBankRecord = (stmtId: string, txId?: string) => {
     setBankStatements((prev) =>
@@ -1124,6 +1303,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('Reconciliation Complete', 'Statement and ledger balances now 100% matched.');
   };
 
+  const deleteBankStatement = (id: string) => {
+    setBankStatements((prev) => prev.filter((s) => s.id !== id));
+    addAuditLog('Bank Statement Record Removed', 'Bank Reconciliation', `Removed statement item: ${id}`, 'Warning');
+    showToast('Record Deleted', 'Bank statement record removed.', 'info');
+  };
+
   // ─── Workflow 9: Notifications ───────────────────────────────────────────────
   const addNotification = (data: Partial<NotificationItem>): NotificationItem => {
     const id = `notif-0${notifications.length + 1}`;
@@ -1142,6 +1327,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addAuditLog('Notification Broadcast', 'Communication', `Dispatched notification: "${newNotif.title}" to ${newNotif.recipientGroup}`);
     showToast('Notification Dispatched', `Communication sent via ${newNotif.channel}.`);
     return newNotif;
+  };
+
+  const deleteNotification = (id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    showToast('Notification Dismissed', 'Notification item dismissed.', 'info');
   };
 
   const markNotificationAsRead = (id: string) => {
@@ -1167,6 +1357,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
     addAuditLog('Role Permission Modified', 'Permissions', `Updated ${permissionKey} on ${moduleName} for role ${roleId}`, 'Security');
     showToast('Permissions Saved', `Role access updated in permission matrix.`);
+  };
+
+  const addRole = (data: Partial<RoleDefinition>): RoleDefinition => {
+    const id = `role-00${roles.length + 1}`;
+    const newRole: RoleDefinition = {
+      id,
+      name: data.name || 'Custom Admin Role',
+      description: data.description || 'Specialized role privileges.',
+      usersCount: 0,
+      permissions: data.permissions || [
+        { module: 'Overview & Reports', view: true, create: false, edit: false, delete: false, approve: false, export: false },
+        { module: 'Organizations', view: true, create: false, edit: false, delete: false, approve: false, export: false },
+        { module: 'People & Members', view: true, create: false, edit: false, delete: false, approve: false, export: false },
+        { module: 'Insurance Plans & Policies', view: true, create: false, edit: false, delete: false, approve: false, export: false },
+        { module: 'Claims & Pre-Authorizations', view: true, create: false, edit: false, delete: false, approve: false, export: false },
+        { module: 'Settlements & Finance', view: false, create: false, edit: false, delete: false, approve: false, export: false },
+        { module: 'Audit Logs & System Settings', view: false, create: false, edit: false, delete: false, approve: false, export: false },
+      ],
+    };
+    setRoles((prev) => [...prev, newRole]);
+    addAuditLog('Role Created', 'Permissions', `Created security role: ${newRole.name}`, 'Security');
+    showToast('Role Created', `Security role ${newRole.name} created.`, 'success');
+    return newRole;
+  };
+
+  const updateRole = (id: string, updates: Partial<RoleDefinition>) => {
+    setRoles((prev) => prev.map((r) => (r.id === id ? { ...r, ...updates } : r)));
+    addAuditLog('Role Updated', 'Permissions', `Updated security role: ${id}`, 'Security');
+    showToast('Role Updated', 'Security role configuration updated.', 'success');
+  };
+
+  const deleteRole = (id: string) => {
+    const item = roles.find((r) => r.id === id);
+    setRoles((prev) => prev.filter((r) => r.id !== id));
+    addAuditLog('Role Deleted', 'Permissions', `Deleted security role: ${item?.name || id}`, 'Security');
+    showToast('Role Deleted', `Role ${item?.name || id} removed from security matrix.`, 'info');
   };
 
   const addAdminUser = (data: Partial<AdminUser>): AdminUser => {
@@ -1197,6 +1423,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAdminUsers((prev) => prev.map((u) => (u.id === id ? { ...u, ...updates } : u)));
     addAuditLog('Admin User Updated', 'Admin Users & Roles', `Updated administrative profile for ${id}`);
     showToast('Admin Profile Updated', 'Administrator profile details saved.');
+  };
+
+  const deleteAdminUser = (id: string) => {
+    const item = adminUsers.find((u) => u.id === id);
+    setAdminUsers((prev) => prev.filter((u) => u.id !== id));
+    addAuditLog('Admin User Removed', 'Admin Users & Roles', `Revoked and deleted administrator account: ${item?.name || id}`, 'Security');
+    showToast('Admin User Deleted', `Account for ${item?.name || 'user'} has been deleted.`, 'info');
   };
 
   // Auth Operations
@@ -1351,21 +1584,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateCompany,
         deleteCompany,
         addCorporateClient,
+        updateCorporateClient,
+        deleteCorporateClient,
         addInsuranceCompany,
+        updateInsuranceCompany,
+        deleteInsuranceCompany,
         addHospital,
-        addSettlement,
+        updateHospital,
+        deleteHospital,
 
+        addCustomer,
+        updateCustomer,
+        deleteCustomer,
         addMember,
         updateMember,
         deleteMember,
-        addCustomer,
 
         addPolicy,
         updatePolicy,
+        deletePolicy,
         addPlan,
         updatePlan,
+        deletePlan,
 
         addClaim,
+        updateClaim,
+        deleteClaim,
         approveClaim,
         rejectClaim,
         requestClaimInfo,
@@ -1373,27 +1617,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         markClaimAsPaid,
 
         addPreAuth,
+        updatePreAuth,
+        deletePreAuth,
         approvePreAuth,
         rejectPreAuth,
         requestPreAuthInfo,
 
+        addSettlement,
+        updateSettlement,
+        deleteSettlement,
         processSettlement,
         markSettlementPaid,
+        addTransaction,
+        updateTransaction,
+        deleteTransaction,
 
         addInvoice,
+        updateInvoice,
+        deleteInvoice,
         recordInvoicePayment,
 
         toggleMatchBankRecord,
         addBankAdjustment,
         completeReconciliation,
+        deleteBankStatement,
 
         addNotification,
+        deleteNotification,
         markNotificationAsRead,
         markAllNotificationsAsRead,
 
         updateRolePermission,
+        addRole,
+        updateRole,
+        deleteRole,
         addAdminUser,
         updateAdminUser,
+        deleteAdminUser,
 
         resetToDefaults,
       }}

@@ -9,7 +9,7 @@ import { useApp } from '../../context/AppContext';
 import { AdminUser } from '../../types';
 
 export const AdminUsersRoles: React.FC = () => {
-  const { adminUsers, roles, auditLogs, addAdminUser, updateAdminUser, showToast, navigate } = useApp();
+  const { adminUsers, roles, auditLogs, addAdminUser, updateAdminUser, deleteAdminUser, showToast, navigate } = useApp();
 
   const [selectedAdmin, setSelectedAdmin] = useState<AdminUser | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -235,11 +235,18 @@ export const AdminUsersRoles: React.FC = () => {
         searchPlaceholder="Search admins by name, email, or department..."
         searchKey="name"
         onRowClick={handleOpenDetail}
+        onView={handleOpenDetail}
+        onDelete={(u) => deleteAdminUser(u.id)}
         actions={[
           {
             label: 'View Admin Profile',
             icon: 'eye',
             onClick: handleOpenDetail,
+          },
+          {
+            label: 'Configure Role Privileges',
+            icon: 'permissions',
+            onClick: () => navigate('Permissions'),
           },
           {
             label: 'Toggle Account Access',
@@ -271,6 +278,39 @@ export const AdminUsersRoles: React.FC = () => {
             subtitle={`${selectedAdmin.role} • ${selectedAdmin.department}`}
             badge={<Badge value={selectedAdmin.status} />}
             tabs={['Admin Profile', 'Permissions Matrix', 'Activity & Audit Trail']}
+            actions={[
+              {
+                label: 'Delete Admin User',
+                icon: 'trash',
+                variant: 'danger',
+                onClick: () => {
+                  deleteAdminUser(selectedAdmin.id);
+                  setIsDetailOpen(false);
+                  setSelectedAdmin(null);
+                },
+              },
+            ]}
+            footer={
+              <div className="flex items-center justify-between w-full">
+                <button
+                  type="button"
+                  onClick={() => setIsDetailOpen(false)}
+                  className="px-3.5 py-1.5 border border-[#E5EAF1] rounded-lg text-xs font-semibold text-[#66758A] hover:bg-[#F6F8FC]"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsDetailOpen(false);
+                    navigate('Permissions');
+                  }}
+                  className="px-3.5 py-1.5 bg-[#2776EA] text-white rounded-lg text-xs font-semibold hover:bg-[#1E65CF]"
+                >
+                  Configure Role Permissions Matrix →
+                </button>
+              </div>
+            }
           >
             {(activeTab) => (
               <div className="space-y-4">

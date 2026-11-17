@@ -9,8 +9,9 @@ import { Policy } from '../../types';
 import AddPolicyModal from './AddPolicyModal';
 
 export const Policies: React.FC = () => {
-  const { policies, claims, transactions, insuredMembers, showToast } = useApp();
+  const { policies, claims, transactions, insuredMembers, navigate, showToast, deletePolicy } = useApp();
   const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null);
+  const [editingPolicy, setEditingPolicy] = useState<Policy | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('Summary');
@@ -111,7 +112,10 @@ export const Policies: React.FC = () => {
         primaryAction={{
           label: 'Create Policy',
           icon: 'plus',
-          onClick: () => setIsAddOpen(true),
+          onClick: () => {
+            setEditingPolicy(null);
+            setIsAddOpen(true);
+          },
         }}
       />
 
@@ -142,6 +146,36 @@ export const Policies: React.FC = () => {
         searchPlaceholder="Search policy number, subscriber, insurer, or plan..."
         statusKey="status"
         onView={handleView}
+        onEdit={(p) => {
+          setEditingPolicy(p);
+          setIsAddOpen(true);
+        }}
+        onDelete={(p) => deletePolicy(p.id)}
+        actions={[
+          {
+            label: 'View Policy Agreement',
+            icon: 'eye',
+            onClick: handleView,
+          },
+          {
+            label: 'Edit Policy',
+            icon: 'edit',
+            onClick: (p) => {
+              setEditingPolicy(p);
+              setIsAddOpen(true);
+            },
+          },
+          {
+            label: 'View Incurred Claims',
+            icon: 'claims',
+            onClick: () => navigate('Claims Management'),
+          },
+          {
+            label: 'View Subscriber Profile',
+            icon: 'member',
+            onClick: () => navigate('Insured Members'),
+          },
+        ]}
       />
 
       {/* Detail Drawer */}
@@ -160,8 +194,19 @@ export const Policies: React.FC = () => {
           onTabChange={setActiveTab}
           actions={[
             {
-              label: 'Renew Policy',
+              label: 'Edit Policy',
+              icon: 'edit',
               variant: 'primary',
+              onClick: () => {
+                const pol = selectedPolicy;
+                setIsDetailOpen(false);
+                setEditingPolicy(pol);
+                setIsAddOpen(true);
+              },
+            },
+            {
+              label: 'Renew Policy',
+              variant: 'secondary',
               onClick: () => showToast('Renewal Initiated', `Renewal terms generated for ${selectedPolicy.policyNumber}.`),
             },
             {
@@ -169,6 +214,16 @@ export const Policies: React.FC = () => {
               icon: 'download',
               variant: 'secondary',
               onClick: () => showToast('Schedule Exported', `Official PDF exported for ${selectedPolicy.policyNumber}.`),
+            },
+            {
+              label: 'Delete Policy',
+              icon: 'trash',
+              variant: 'danger',
+              onClick: () => {
+                deletePolicy(selectedPolicy.id);
+                setIsDetailOpen(false);
+                setSelectedPolicy(null);
+              },
             },
           ]}
         >
@@ -429,7 +484,14 @@ export const Policies: React.FC = () => {
       )}
 
       {/* Add Policy Modal */}
-      <AddPolicyModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} />
+      <AddPolicyModal
+        isOpen={isAddOpen}
+        initialData={editingPolicy}
+        onClose={() => {
+          setIsAddOpen(false);
+          setEditingPolicy(null);
+        }}
+      />
     </div>
   );
 };
