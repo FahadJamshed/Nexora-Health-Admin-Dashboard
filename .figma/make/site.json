@@ -1,0 +1,14 @@
+{
+  "title": "Inc App",
+  "icons": {
+    "icon": "/favicon.png"
+  },
+  "description": "A centralized healthcare insurance administration dashboard for operations and finance teams to manage organizations, members, policies, claims, and payments.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
