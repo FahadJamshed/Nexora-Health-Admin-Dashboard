@@ -95,7 +95,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   mobileOpen,
   onCloseMobile,
 }) => {
-  const { currentPage, navigate, currentUser, logout, showToast } = useApp();
+  const { currentPage, navigate, showToast } = useApp();
 
   // Accordion state for sidebar groups
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
@@ -112,9 +112,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [selectedWorkspace, setSelectedWorkspace] = useState(workspaces[0]);
   const [isWorkspaceMenuOpen, setIsWorkspaceMenuOpen] = useState(false);
 
-  // Footer profile popover state
-  const [isFooterProfileOpen, setIsFooterProfileOpen] = useState(false);
-
   // Auto-expand group of currently active page
   useEffect(() => {
     const parentGroup = navGroups.find((g) => g.items.some((i) => i.name === currentPage));
@@ -130,7 +127,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const handleItemClick = (pageName: NavigationPage) => {
     navigate(pageName);
     onCloseMobile();
-    setIsFooterProfileOpen(false);
   };
 
   const handleSelectWorkspace = (ws: typeof workspaces[0]) => {
@@ -152,39 +148,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed inset-y-0 left-0 bg-white border-r border-[#E5EAF1] z-40 flex flex-col transition-all duration-200 ease-in-out ${
-          collapsed ? 'w-[76px]' : 'w-[252px]'
+        className={`fixed inset-y-0 left-0 box-border flex-none bg-white border-r border-[#E5EAF1] z-40 flex flex-col transition-[width,transform] duration-200 ease-in-out ${
+          collapsed ? '!w-[76px] min-w-[76px] max-w-[76px]' : '!w-[252px] min-w-[252px] max-w-[252px]'
         } ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
         {/* Brand Header */}
-        <div className="h-[68px] border-b border-[#E5EAF1] flex items-center justify-between px-4 flex-shrink-0 relative">
+        <div className="h-[68px] border-b border-[#E5EAF1] flex items-center justify-between px-3 flex-shrink-0 relative">
           <div
             onClick={() => handleItemClick('Dashboard')}
-            className="flex items-center gap-3 cursor-pointer select-none overflow-hidden"
+            className="flex items-center gap-2 cursor-pointer select-none overflow-hidden flex-1 min-w-0"
           >
-            {/* Logo Mark */}
-            <div className="w-8 h-8 rounded-lg bg-[#102A43] flex items-center justify-center flex-shrink-0 shadow-xs relative overflow-hidden">
-              <span className="w-4 h-1.5 bg-white rounded-xs absolute" />
-              <span className="w-1.5 h-4 bg-white rounded-xs absolute" />
-              <span className="w-1 h-1 bg-[#2776EA] rounded-full absolute -top-0.5 -right-0.5" />
-            </div>
-
-            {!collapsed && (
-              <div className="flex flex-col min-w-0">
-                <span className="text-[16px] font-bold tracking-tight text-[#102A43] leading-none">
-                  Nexora
-                </span>
-                <span className="text-[9px] font-bold uppercase tracking-[1.5px] text-[#2776EA] mt-1 leading-none">
-                  Health Admin
-                </span>
+            {collapsed ? (
+              /* Collapsed: show authentic brand mark icon */
+              <div className="w-9 h-9 flex-shrink-0 flex items-center justify-center mx-auto">
+                <img
+                  src="/logo-icon.png"
+                  alt="Nexora Health"
+                  className="w-8 h-8 object-contain"
+                />
               </div>
+            ) : (
+              /* Expanded: show clean balanced logo */
+              <img
+                src="/logo.png"
+                alt="Nexora Health Dashboard"
+                className="h-10 w-auto object-contain max-w-[185px]"
+              />
             )}
           </div>
 
           {/* Collapse Button (Desktop Only) */}
           <button
             onClick={onToggleCollapse}
-            className="hidden lg:flex absolute -right-3 top-6 w-6 h-6 rounded-full bg-white border border-[#E5EAF1] shadow-md items-center justify-center text-[#8A97A8] hover:text-[#172B4D] hover:bg-[#F6F8FC] transition-colors"
+            className="hidden lg:flex absolute -right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white border border-[#E5EAF1] shadow-lg items-center justify-center text-[#172B4D] hover:bg-[#F6F8FC] z-[60]"
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             <Icon
@@ -351,94 +347,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             );
           })}
         </nav>
-
-        {/* Sidebar Footer User Profile */}
-        <div className="p-3 border-t border-[#E5EAF1] bg-[#FAFBFD] flex-shrink-0 relative">
-          <div
-            onClick={() => setIsFooterProfileOpen(!isFooterProfileOpen)}
-            className="flex items-center gap-2.5 p-1 rounded-lg hover:bg-white hover:border hover:border-[#E5EAF1] cursor-pointer transition-all"
-          >
-            {/* User Initials Badge */}
-            <div className="w-8 h-8 rounded-full bg-[#EAF2FF] border border-[#c8ddfb] text-[#2776EA] font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-2xs">
-              {currentUser.avatarInitials || 'SJ'}
-            </div>
-
-            {!collapsed && (
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-xs font-semibold text-[#102A43] truncate leading-tight">
-                  {currentUser.name}
-                </span>
-                <span className="text-[10px] text-[#8A97A8] leading-tight truncate">{currentUser.role}</span>
-              </div>
-            )}
-
-            {!collapsed && (
-              <Icon
-                name="chevron-down"
-                size={12}
-                className={`text-[#8A97A8] transition-transform duration-150 ${
-                  isFooterProfileOpen ? 'rotate-180' : 'rotate-0'
-                }`}
-              />
-            )}
-          </div>
-
-          {/* Footer Profile Dropdown Menu */}
-          {isFooterProfileOpen && (
-            <>
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setIsFooterProfileOpen(false)}
-              />
-              <div className="absolute left-3 right-3 bottom-full mb-2 bg-white rounded-xl shadow-xl border border-[#E5EAF1] py-1.5 z-50 animate-in fade-in zoom-in-95">
-                <div className="px-3 py-2 border-b border-[#E5EAF1]">
-                  <p className="text-xs font-semibold text-[#102A43]">{currentUser.name}</p>
-                  <p className="text-[10px] text-[#8A97A8] truncate">{currentUser.email}</p>
-                  <span className="inline-block mt-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#E8F6EF] text-[#16865B]">
-                    {currentUser.role} · Active
-                  </span>
-                </div>
-
-                <button
-                  onClick={() => handleItemClick('Settings')}
-                  className="w-full text-left px-3 py-2 text-xs text-[#40516A] hover:bg-[#F8FAFC] flex items-center gap-2.5 cursor-pointer"
-                >
-                  <Icon name="user" size={14} />
-                  My Profile
-                </button>
-
-                <button
-                  onClick={() => handleItemClick('Settings')}
-                  className="w-full text-left px-3 py-2 text-xs text-[#40516A] hover:bg-[#F8FAFC] flex items-center gap-2.5 cursor-pointer"
-                >
-                  <Icon name="settings" size={14} />
-                  System Settings
-                </button>
-
-                <button
-                  onClick={() => handleItemClick('Permissions')}
-                  className="w-full text-left px-3 py-2 text-xs text-[#40516A] hover:bg-[#F8FAFC] flex items-center gap-2.5 cursor-pointer"
-                >
-                  <Icon name="permissions" size={14} />
-                  Permissions Matrix
-                </button>
-
-                <div className="border-t border-[#E5EAF1] my-1" />
-
-                <button
-                  onClick={() => {
-                    setIsFooterProfileOpen(false);
-                    logout();
-                  }}
-                  className="w-full text-left px-3 py-2 text-xs text-[#D64545] hover:bg-[#FDECEC] flex items-center gap-2.5 cursor-pointer"
-                >
-                  <Icon name="close" size={14} />
-                  Sign Out / Switch User
-                </button>
-              </div>
-            </>
-          )}
-        </div>
       </aside>
     </>
   );

@@ -20,8 +20,8 @@ export const AuthPortal: React.FC = () => {
         {/* Brand Header */}
         <div className="relative z-10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#2776EA] text-white flex items-center justify-center font-bold text-lg shadow-sm">
-              NH
+            <div className="w-12 h-12 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-md">
+              <img src="/logo-icon.png" alt="Nexora Health" className="w-full h-full object-contain" />
             </div>
             <div>
               <span className="text-xl font-bold tracking-tight text-white block">Nexora Health</span>
